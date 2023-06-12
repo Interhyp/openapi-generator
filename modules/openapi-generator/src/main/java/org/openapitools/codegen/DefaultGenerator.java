@@ -83,6 +83,7 @@ public class DefaultGenerator implements Generator {
     protected CodegenIgnoreProcessor ignoreProcessor;
     private Boolean generateApis = null;
     private Boolean generateModels = null;
+    private Boolean generateClient = null;
     private Boolean generateRecursiveDependentModels = null;
     private Boolean generateSupportingFiles = null;
     private Boolean generateWebhooks = null;
@@ -98,7 +99,7 @@ public class DefaultGenerator implements Generator {
     /**
      * -- GETTER --
      *  Retrieves an instance to the configured template processor, available after user-defined options are
-     *  applied via 
+     *  applied via
      * .
      *
      * @return A configured {@link TemplateProcessor}, or null.
@@ -207,6 +208,7 @@ public class DefaultGenerator implements Generator {
         // NOTE: Boolean.TRUE is required below rather than `true` because of JVM boxing constraints and type inference.
         generateApis = GlobalSettings.getProperty(CodegenConstants.APIS) != null ? Boolean.TRUE : getGeneratorPropertyDefaultSwitch(CodegenConstants.APIS, null);
         generateModels = GlobalSettings.getProperty(CodegenConstants.MODELS) != null ? Boolean.TRUE : getGeneratorPropertyDefaultSwitch(CodegenConstants.MODELS, null);
+        generateClient = GlobalSettings.getProperty(CodegenConstants.GENERATE_CLIENT) != null ? Boolean.TRUE : getGeneratorPropertyDefaultSwitch(CodegenConstants.GENERATE_CLIENT, null);
         generateSupportingFiles = GlobalSettings.getProperty(CodegenConstants.SUPPORTING_FILES) != null ? Boolean.TRUE : getGeneratorPropertyDefaultSwitch(CodegenConstants.SUPPORTING_FILES, null);
         generateWebhooks = GlobalSettings.getProperty(CodegenConstants.WEBHOOKS) != null ? Boolean.TRUE : getGeneratorPropertyDefaultSwitch(CodegenConstants.WEBHOOKS, null);
 
@@ -244,6 +246,7 @@ public class DefaultGenerator implements Generator {
 
         config.additionalProperties().put(CodegenConstants.GENERATE_APIS, generateApis);
         config.additionalProperties().put(CodegenConstants.GENERATE_MODELS, generateModels);
+        config.additionalProperties().put(CodegenConstants.GENERATE_CLIENT, generateClient);
         config.additionalProperties().put(CodegenConstants.GENERATE_WEBHOOKS, generateWebhooks);
         config.additionalProperties().put(CodegenConstants.GENERATE_RECURSIVE_DEPENDENT_MODELS, generateRecursiveDependentModels);
 
@@ -554,7 +557,7 @@ public class DefaultGenerator implements Generator {
                 }
             }
         }
-        
+
         // generate files based on processed models
         for (String modelName : allProcessedModels.keySet()) {
             ModelsMap models = allProcessedModels.get(modelName);
