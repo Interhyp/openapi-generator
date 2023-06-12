@@ -1,0 +1,231 @@
+{{>partial_header}}
+package {{packageName}}
+
+{{#operations}}
+import (
+    "context"
+    "fmt"
+    aurestclientapi "github.com/StephanHCB/go-autumn-restclient/api"
+    "net/http"
+    urlUtil "net/url"
+{{#imports}}
+    "{{import}}"
+{{/imports}}
+)
+
+type {{classname}} interface {
+{{#operation}}
+
+    /*
+       {{operationId}} {{{summary}}}{{^summary}}Method for {{operationId}}{{/summary}}
+    {{#isDeprecated}}
+       Deprecated
+    {{/isDeprecated}}
+    */
+    {{{nickname}}}(ctx context.Context{{#pathParams}}, {{paramName}} {{{dataType}}}{{/pathParams}}{{#bodyParams}}, {{paramName}} {{{dataType}}}{{/bodyParams}}{{#formParams}}{{#isFile}}, {{paramName}} {{{dataType}}}{{/isFile}}{{/formParams}}{{#queryParams}}, {{paramName}} {{{dataType}}}{{/queryParams}}) ({{#returnType}}{{{.}}}, {{/returnType}}aurestclientapi.ParsedResponse, error)
+
+    // {{nickname}}Executes the request{{#returnType}}
+    // @return {{{.}}}{{/returnType}}
+    {{#isDeprecated}}
+    // Deprecated
+    {{/isDeprecated}}
+    {{{nickname}}}Request(ctx context.Context{{#pathParams}}, {{paramName}} {{{dataType}}}{{/pathParams}}) {{#structPrefix}}{{&classname}}{{/structPrefix}}{{^structPrefix}}Api{{/structPrefix}}{{operationId}}Request
+{{/operation}}
+}
+
+{{#operation}}
+ type {{#structPrefix}}{{&classname}}{{/structPrefix}}{{^structPrefix}}Api{{/structPrefix}}{{operationId}}Request struct {
+    ctx context.Context{{#generateInterfaces}}
+    ApiService {{classname}}Repository
+{{/generateInterfaces}}{{^generateInterfaces}}
+    ApiService *{{classname}}Repository
+{{/generateInterfaces}}
+{{#allParams}}
+    {{paramName}} {{^isPathParam}}{{^isFile}}*{{/isFile}}{{/isPathParam}}{{{dataType}}}
+{{/allParams}}
+}
+
+{{#allParams}}
+{{^isPathParam}}
+{{#description}}
+    // {{.}}
+{{/description}}
+{{#isDeprecated}}
+    // Deprecated
+{{/isDeprecated}}
+func (r *{{#structPrefix}}{{&classname}}{{/structPrefix}}{{^structPrefix}}Api{{/structPrefix}}{{operationId}}Request) {{vendorExtensions.x-export-param-name}}({{paramName}} {{{dataType}}}) *{{#structPrefix}}{{&classname}}{{/structPrefix}}{{^structPrefix}}Api{{/structPrefix}}{{operationId}}Request {
+    r.{{paramName}} = {{^isFile}}&{{/isFile}}{{paramName}}
+    return r
+}
+
+{{/isPathParam}}
+{{/allParams}}
+func (r *{{#structPrefix}}{{&classname}}{{/structPrefix}}{{^structPrefix}}Api{{/structPrefix}}{{operationId}}Request) Execute() ({{#returnType}}{{{.}}}, {{/returnType}}aurestclientapi.ParsedResponse, error) {
+    return r.ApiService.{{nickname}}Execute(r)
+}
+
+func (a *{{classname}}Repository) {{{nickname}}}Request(ctx context.Context{{#pathParams}}, {{paramName}} {{{dataType}}}{{/pathParams}}) {{#structPrefix}}{{&classname}}{{/structPrefix}}{{^structPrefix}}Api{{/structPrefix}}{{operationId}}Request {
+    return {{#structPrefix}}{{&classname}}{{/structPrefix}}{{^structPrefix}}Api{{/structPrefix}}{{operationId}}Request{
+        ApiService: a,
+        ctx: ctx,
+{{#pathParams}}
+        {{paramName}}: {{paramName}},
+{{/pathParams}}
+    }
+}
+
+{{#isDeprecated}}
+// Deprecated
+{{/isDeprecated}}
+func (a *{{classname}}Repository) {{nickname}}Execute(r *{{#structPrefix}}{{&classname}}{{/structPrefix}}{{^structPrefix}}Api{{/structPrefix}}{{operationId}}Request) ({{#returnType}}{{{.}}}, {{/returnType}}aurestclientapi.ParsedResponse, error) {
+    fullUrlValue := a.baseUrl() + "{{{path}}}"
+{{#pathParams}}
+    {{=<% %>=}}
+    fullUrlValue = strings.ReplaceAll(fullUrlValue, "{<%baseName%>}", <%^isAllowReserved%>urlUtil.PathEscape(<%/isAllowReserved%><%#isString%>r.<%paramName%><%/isString%><%^isString%>parameterValueToString(r.<%paramName%>)<%/isString%><%^isAllowReserved%>)<%/isAllowReserved%>)
+    <%={{ }}=%>
+{{/pathParams}}
+    requestURL, _ := urlUtil.Parse(fullUrlValue)
+{{#queryParams}}
+    if r.{{paramName}}!=nil {
+{{#isArray}}
+        for _, ___element := range *r.{{baseName}} {
+            withUrlQueryParam(requestURL, "{{baseName}}", {{#items}}{{#isString}}___element{{/isString}}{{^isString}}parameterValueToString(___element){{/isString}}{{/items}})
+        }
+{{/isArray}}
+{{^isArray}}
+        withUrlQueryParam(requestURL, "{{baseName}}", {{#isString}}*r.{{paramName}}{{/isString}}{{^isString}}parameterValueToString(*r.{{paramName}}){{/isString}})
+{{/isArray}}
+    }
+{{/queryParams}}
+{{#formParams}}
+    {{#isFile}}
+    request, multipartErr := createMultipartRequestForFile(r.ctx, r.{{paramName}}["fileName"], r.{{paramName}}["fileContent"])
+    if multipartErr != nil {
+        return {{#returnType}}{{{.}}}{}, {{/returnType}}aurestclientapi.ParsedResponse{}, multipartErr
+    }
+    {{/isFile}}
+{{/formParams}}
+    return a.make{{nickname}}Call(r.ctx, requestURL, {{#bodyParams}}r.{{paramName}}{{/bodyParams}}{{^bodyParams}}{{#formParams}}{{#isFile}}request{{/isFile}}{{/formParams}}{{^formParams}}nil{{/formParams}}{{/bodyParams}})
+}
+
+func (a *{{classname}}Repository) {{{nickname}}}(ctx context.Context{{#pathParams}}, {{paramName}} {{{dataType}}}{{/pathParams}}{{#bodyParams}}, {{paramName}} {{{dataType}}}{{/bodyParams}}{{#formParams}}{{#isFile}}, {{paramName}} {{{dataType}}}{{/isFile}}{{/formParams}}{{#queryParams}}, {{paramName}} {{{dataType}}}{{/queryParams}}) ({{#returnType}}{{{.}}}, {{/returnType}}aurestclientapi.ParsedResponse, error) {
+    fullUrlValue := a.baseUrl() + "{{{path}}}"
+{{#pathParams}}
+{{=<% %>=}}
+    fullUrlValue = strings.ReplaceAll(fullUrlValue, "{<%baseName%>}", <%^isAllowReserved%>urlUtil.PathEscape(<%/isAllowReserved%><%#isString%><%paramName%><%/isString%><%^isString%>parameterValueToString(<%paramName%>)<%/isString%><%^isAllowReserved%>)<%/isAllowReserved%>)
+<%={{ }}=%>
+{{/pathParams}}
+    requestURL, _ := urlUtil.Parse(fullUrlValue)
+{{#queryParams}}
+{{#isArray}}
+    for _, ___element := range {{baseName}} {
+        withUrlQueryParam(requestURL, "{{baseName}}", {{#items}}{{#isString}}___element{{/isString}}{{^isString}}parameterValueToString(___element){{/isString}}{{/items}})
+    }
+{{/isArray}}
+{{^isArray}}
+    withUrlQueryParam(requestURL, "{{baseName}}", {{#isString}}{{paramName}}{{/isString}}{{^isString}}parameterValueToString({{paramName}}){{/isString}})
+{{/isArray}}
+{{/queryParams}}
+{{#formParams}}
+    {{#isFile}}
+    request, multipartErr := createMultipartRequestForFile(ctx, {{paramName}}["fileName"], {{paramName}}["fileContent"])
+    if multipartErr != nil {
+        return {{#returnType}}{{{.}}}{}, {{/returnType}}aurestclientapi.ParsedResponse{}, multipartErr
+    }
+    {{/isFile}}
+{{/formParams}}
+    return a.make{{{nickname}}}Call(ctx, requestURL, {{#bodyParams}}{{paramName}}{{/bodyParams}}{{^bodyParams}}{{#formParams}}{{#isFile}}request{{/isFile}}{{/formParams}}{{^formParams}}nil{{/formParams}}{{/bodyParams}})
+}
+
+func (a *{{classname}}Repository) make{{{nickname}}}Call(ctx context.Context, requestURL *urlUtil.URL, requestBody any) ({{#returnType}}{{{.}}}, {{/returnType}}aurestclientapi.ParsedResponse, error) {
+	method := http.Method{{httpMethod}}
+	requestUrl := requestURL.String()
+
+{{#returnProperty}}
+    {{#isString}}
+    var result *[]byte
+    {{/isString}}
+    {{^isString}}
+    var result {{returnType}}
+    {{/isString}}
+{{/returnProperty}}
+    emptyResponse := make([]byte, 0)
+    responseBodyPointer := &emptyResponse
+    response := aurestclientapi.ParsedResponse{
+        Body: &responseBodyPointer,
+    }
+    err := a.httpClient().Perform(ctx, method, requestUrl, requestBody, &response)
+	if err != nil {
+		return {{#returnProperty}}{{#isString}}""{{/isString}}{{^isString}}result{{/isString}},{{/returnProperty}}response, err
+	}
+{{#responses}}
+    {{^is1xx}}
+    {{^is2xx}}
+    {{#range}}
+        {{#is3xx}}
+    if response.Status >= 300 && response.Status < 400 {
+        {{/is3xx}}
+        {{#is4xx}}
+    if response.Status >= 400 && response.Status < 500 {
+        {{/is4xx}}
+        {{#is5xx}}
+    if response.Status >= 500 {
+        {{/is5xx}}
+    {{/range}}
+    {{^range}}
+        {{^wildcard}}
+    if response.Status == {{{code}}} {
+        {{/wildcard}}
+    {{/range}}
+    {{^wildcard}}
+    {{#dataType}}
+		err = safeUnmarshal[{{{.}}}](&response)
+        if err == nil {
+            err = NewError(fmt.Sprintf("Got status %d", response.Status), response.Status)
+        }
+        return {{#returnProperty}}{{#isString}}""{{/isString}}{{^isString}}result{{/isString}}, {{/returnProperty}}response, err
+    {{/dataType}}
+    {{^dataType}}
+		return {{#returnProperty}}{{#isString}}""{{/isString}}{{^isString}}result{{/isString}}, {{/returnProperty}}response, nil
+    {{/dataType}}
+    }
+    {{/wildcard}}
+    {{/is2xx}}
+    {{/is1xx}}
+{{/responses}}
+
+    if response.Status < 400 {
+{{#returnProperty}}
+    {{#isString}}
+        result = *response.Body.(**[]byte)
+    {{/isString}}
+    {{^isString}}
+        err = safeUnmarshal[{{returnType}}](&response)
+        if err == nil {
+            result = response.Body.({{returnType}})
+        }
+    {{/isString}}
+{{/returnProperty}}
+    } else {
+        err = NewError(fmt.Sprintf("Got unknown status %d", response.Status), response.Status)
+    }
+    return {{#returnProperty}}{{#isString}}string(*result){{/isString}}{{^isString}}result{{/isString}}, {{/returnProperty}}response, err
+}
+{{/operation}}
+{{/operations}}
+
+type {{classname}}Repository struct {
+    ApiClient *ApiClient
+}
+
+func (c *{{classname}}Repository) baseUrl() string {
+    return c.ApiClient.BaseUrl
+}
+
+func (c *{{classname}}Repository) httpClient() aurestclientapi.Client {
+    return c.ApiClient.Client
+}
+
+func New{{classname}}(client *ApiClient) {{classname}} {
+    return &{{classname}}Repository{ApiClient: client}
+}

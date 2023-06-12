@@ -1,0 +1,6 @@
+generatorName: go-autumrest
+outputDir: samples/client/petstore/go/autumrest
+inputSpec: modules/openapi-generator/src/test/resources/3_0/petstore.yaml
+templateDir: modules/openapi-generator/src/main/resources/go-autumrest
+additionalProperties:
+  hideGenerationTimestamp: "true"

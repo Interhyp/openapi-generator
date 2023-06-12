@@ -45,6 +45,7 @@ public class GoClientOptionsTest extends AbstractOptionsTest {
         verify(clientCodegen).setPackageName(GoClientOptionsProvider.PACKAGE_NAME_VALUE);
         verify(clientCodegen).setWithXml(GoClientOptionsProvider.WITH_XML_VALUE);
         verify(clientCodegen).setEnumClassPrefix(GoClientOptionsProvider.ENUM_CLASS_PREFIX_VALUE);
+        verify(clientCodegen).setForceLargeNumbers(GoClientOptionsProvider.ENUM_CLASS_PREFIX_VALUE);
         verify(clientCodegen).setPrependFormOrBodyParameters(GoClientOptionsProvider.PREPEND_FORM_OR_BODY_PARAMETERS_VALUE);
         verify(clientCodegen).setIsGoSubmodule(GoClientOptionsProvider.IS_GO_SUBMODULE_VALUE);
         verify(clientCodegen).setGenerateInterfaces(GoClientOptionsProvider.GENERATE_INTERFACES_VALUE);

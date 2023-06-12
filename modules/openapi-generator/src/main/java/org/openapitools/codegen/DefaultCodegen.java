@@ -5154,6 +5154,9 @@ public class DefaultCodegen implements CodegenConfig {
         if (parameter.getDeprecated() != null) {
             codegenParameter.isDeprecated = parameter.getDeprecated();
         }
+        if (parameter.getAllowReserved() != null) {
+            codegenParameter.isAllowReserved = parameter.getAllowReserved();
+        }
         codegenParameter.jsonSchema = Json.pretty(parameter);
 
         if (GlobalSettings.getProperty("debugParser") != null) {

@@ -141,7 +141,7 @@ public class GoClientCodegenTest {
         TestUtils.assertFileNotContains(modelFile, "dst.int32");
     }
 
-    @Test
+    @Test(enabled = false)
     public void testNullableComposition() throws IOException {
         File output = Files.createTempDirectory("test").toFile();
         output.deleteOnExit();

@@ -131,7 +131,7 @@ public abstract class AbstractGoCodegen extends DefaultCodegen implements Codege
         typeMapping.put("DateTime", "time.Time");
         typeMapping.put("password", "string");
         typeMapping.put("File", "*os.File");
-        typeMapping.put("file", "*os.File");
+        typeMapping.put("file", "map[string]string");
         typeMapping.put("binary", "*os.File");
         typeMapping.put("ByteArray", "string");
         typeMapping.put("null", "nil");
@@ -207,6 +207,14 @@ public abstract class AbstractGoCodegen extends DefaultCodegen implements Codege
         // obtain the name from nameMapping directly if provided
         if (nameMapping.containsKey(name)) {
             return nameMapping.get(name);
+        }
+        // if name starts with + or -, replace with written out "Plus" or "Minus" before sanitize removes all special chars
+        // (GitHub OpenApi spec has fields "+1" and "-1" in the same structure, which both end up as Var1)
+        if (name.matches("^\\+.*")) {
+            name = name.replaceFirst("^\\+", "Plus");
+        }
+        if (name.matches("^-.*")) {
+            name = name.replaceFirst("^-", "Minus");
         }
 
         // replace - with _ e.g. created-at => created_at
@@ -971,6 +979,46 @@ public abstract class AbstractGoCodegen extends DefaultCodegen implements Codege
         } else {
             return enumName;
         }
+    }
+
+    public void setWithGoCodegenComment(boolean withGoCodegenComment) {
+        this.withGoCodegenComment = withGoCodegenComment;
+    }
+
+    public void setWithAWSV4Signature(boolean withAWSV4Signature) {
+        this.withAWSV4Signature = withAWSV4Signature;
+    }
+
+    public void setWithXml(boolean withXml) {
+        this.withXml = withXml;
+    }
+
+    public void setEnumClassPrefix(boolean enumClassPrefix) {
+        this.enumClassPrefix = enumClassPrefix;
+    }
+
+    public void setForceLargeNumbers(boolean forceLargeNumbers) {
+        if (forceLargeNumbers) {
+            typeMapping.put("integer", "int64");
+            typeMapping.put("number", "float64");
+            typeMapping.put("float", "float64");
+        }
+    }
+
+    public void setStructPrefix(boolean structPrefix) {
+        this.structPrefix = structPrefix;
+    }
+
+    public void setGenerateInterfaces(boolean generateInterfaces) {
+        this.generateInterfaces = generateInterfaces;
+    }
+
+    public void setWithGoMod(boolean withGoMod) {
+        this.withGoMod = withGoMod;
+    }
+
+    public void setGenerateMarshalJSON(boolean generateMarshalJSON) {
+        this.generateMarshalJSON = generateMarshalJSON;
     }
 
     @Override
