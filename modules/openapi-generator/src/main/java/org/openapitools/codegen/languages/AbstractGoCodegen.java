@@ -119,7 +119,7 @@ public abstract class AbstractGoCodegen extends DefaultCodegen implements Codege
         typeMapping.put("DateTime", "time.Time");
         typeMapping.put("password", "string");
         typeMapping.put("File", "*os.File");
-        typeMapping.put("file", "*os.File");
+        typeMapping.put("file", "map[string]string");
         typeMapping.put("binary", "*os.File");
         typeMapping.put("ByteArray", "string");
         typeMapping.put("null", "nil");
@@ -193,6 +193,14 @@ public abstract class AbstractGoCodegen extends DefaultCodegen implements Codege
         // obtain the name from nameMapping directly if provided
         if (nameMapping.containsKey(name)) {
             return nameMapping.get(name);
+        }
+        // if name starts with + or -, replace with written out "Plus" or "Minus" before sanitize removes all special chars
+        // (GitHub OpenApi spec has fields "+1" and "-1" in the same structure, which both end up as Var1)
+        if (name.matches("^\\+.*")) {
+            name = name.replaceFirst("^\\+", "Plus");
+        }
+        if (name.matches("^-.*")) {
+            name = name.replaceFirst("^-", "Minus");
         }
 
         // replace - with _ e.g. created-at => created_at
@@ -752,7 +760,7 @@ public abstract class AbstractGoCodegen extends DefaultCodegen implements Codege
                     imports.add(createMapping("import", "time"));
                     addedTimeImport = true;
                 }
-                
+
                 if (!addedOSImport && ("*os.File".equals(cp.dataType) ||
                         (cp.items != null && "*os.File".equals(cp.items.dataType)))) {
                     imports.add(createMapping("import", "os"));
@@ -915,6 +923,14 @@ public abstract class AbstractGoCodegen extends DefaultCodegen implements Codege
 
     public void setEnumClassPrefix(boolean enumClassPrefix) {
         this.enumClassPrefix = enumClassPrefix;
+    }
+
+    public void setForceLargeNumbers(boolean forceLargeNumbers) {
+        if (forceLargeNumbers) {
+            typeMapping.put("integer", "int64");
+            typeMapping.put("number", "float64");
+            typeMapping.put("float", "float64");
+        }
     }
 
     public void setStructPrefix(boolean structPrefix) {

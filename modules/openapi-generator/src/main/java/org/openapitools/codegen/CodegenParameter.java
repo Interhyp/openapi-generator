@@ -62,6 +62,7 @@ public class CodegenParameter implements IJsonSchemaValidationProperties {
     public boolean hasValidation;
     public boolean isNullable;
     public boolean isDeprecated;
+    public boolean isAllowReserved;
     public String containerType;
     public String containerTypeMapped; // language-specified container type (e.g. `dict` in python for map)
 
@@ -238,6 +239,7 @@ public class CodegenParameter implements IJsonSchemaValidationProperties {
         output.hasValidation = this.hasValidation;
         output.isNullable = this.isNullable;
         output.isDeprecated = this.isDeprecated;
+        output.isAllowReserved = this.isAllowReserved;
         output.isBinary = this.isBinary;
         output.isByteArray = this.isByteArray;
         output.isString = this.isString;
@@ -277,7 +279,7 @@ public class CodegenParameter implements IJsonSchemaValidationProperties {
                 isBodyParam, isContainer, isCollectionFormatMulti, isPrimitiveType, isModel, isExplode, baseName,
                 paramName, dataType, datatypeWithEnum, dataFormat, collectionFormat, description,
                 unescapedDescription, baseType, containerType, containerTypeMapped, defaultValue,
-                enumDefaultValue, enumName, style, isDeepObject, isMatrix, isAllowEmptyValue, example, examples,
+                enumDefaultValue, enumName, style, isDeepObject, isMatrix, isAllowReserved, isAllowEmptyValue, example, examples,
                 jsonSchema, isString, isNumeric, isInteger, isLong, isNumber, isFloat, isDouble, isDecimal,
                 isByteArray, isBinary, isBoolean, isDate, isDateTime, isUuid, isUri, isEmail, isPassword,
                 isFreeFormObject, isAnyType, isArray, isMap, isFile, isEnum, isEnumRef, _enum, allowableValues,
@@ -336,6 +338,7 @@ public class CodegenParameter implements IJsonSchemaValidationProperties {
                 hasValidation == that.hasValidation &&
                 isNullable == that.isNullable &&
                 isDeprecated == that.isDeprecated &&
+                isAllowReserved == that.isAllowReserved &&
                 required == that.required &&
                 isNull == that.isNull &&
                 isVoid == that.isVoid &&
@@ -479,6 +482,7 @@ public class CodegenParameter implements IJsonSchemaValidationProperties {
         sb.append(", minProperties=").append(minProperties);
         sb.append(", isNullable=").append(isNullable);
         sb.append(", isDeprecated=").append(isDeprecated);
+        sb.append(", isAllowReserved=").append(isAllowReserved);
         sb.append(", required=").append(required);
         sb.append(", maximum='").append(maximum).append('\'');
         sb.append(", exclusiveMaximum=").append(exclusiveMaximum);
