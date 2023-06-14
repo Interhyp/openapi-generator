@@ -1390,9 +1390,9 @@
                 <module>modules/openapi-generator-core</module>
                 <module>modules/openapi-generator</module>
                 <module>modules/openapi-generator-cli</module>
-                <module>modules/openapi-generator-maven-plugin</module>
-                <module>modules/openapi-generator-gradle-plugin</module>
-                <module>modules/openapi-generator-online</module>
+<!--                <module>modules/openapi-generator-maven-plugin</module>-->
+<!--                <module>modules/openapi-generator-gradle-plugin</module>-->
+<!--                <module>modules/openapi-generator-online</module>-->
             </modules>
         </profile>
     </profiles>
@@ -1448,15 +1448,15 @@
             </dependency>
         </dependencies>
     </dependencyManagement>
-    <repositories>
-        <repository>
-            <id>sonatype-snapshots</id>
-            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
-            <snapshots>
-                <enabled>true</enabled>
-            </snapshots>
-        </repository>
-    </repositories>
+<!--    <repositories>-->
+<!--        <repository>-->
+<!--            <id>sonatype-snapshots</id>-->
+<!--            <url>https://oss.sonatype.org/content/repositories/snapshots</url>-->
+<!--            <snapshots>-->
+<!--                <enabled>true</enabled>-->
+<!--            </snapshots>-->
+<!--        </repository>-->
+<!--    </repositories>-->
     <properties>
         <maven.compiler.source>11</maven.compiler.source>
         <maven.compiler.target>11</maven.compiler.target>

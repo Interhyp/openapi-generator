@@ -267,19 +267,21 @@ public class GoClientCodegen extends AbstractGoCodegen {
         // e.g. []string => ArrayOfString
         additionalProperties.put("lambda.type-to-name", (Mustache.Lambda) (fragment, writer) -> writer.write(typeToName(fragment.execute())));
 
-//        supportingFiles.add(new SupportingFile("openapi.mustache", "api", "openapi.yaml"));
-//        supportingFiles.add(new SupportingFile("README.mustache", "", "README.md"));
-//        supportingFiles.add(new SupportingFile("git_push.sh.mustache", "", "git_push.sh"));
-//        supportingFiles.add(new SupportingFile("gitignore.mustache", "", ".gitignore"));
-//        supportingFiles.add(new SupportingFile("configuration.mustache", "", "configuration.go"));
+        supportingFiles.add(new SupportingFile("openapi.mustache", "api", "openapi.yaml"));
+        supportingFiles.add(new SupportingFile("README.mustache", "", "README.md"));
+        supportingFiles.add(new SupportingFile("git_push.sh.mustache", "", "git_push.sh"));
+        supportingFiles.add(new SupportingFile("gitignore.mustache", "", ".gitignore"));
+        supportingFiles.add(new SupportingFile("configuration.mustache", "", "configuration.go"));
         supportingFiles.add(new SupportingFile("client.mustache", "", "client.go"));
         supportingFiles.add(new SupportingFile("response.mustache", "", "response.go"));
-//        supportingFiles.add(new SupportingFile("go.mod.mustache", "", "go.mod"));
-//        supportingFiles.add(new SupportingFile("go.sum.mustache", "", "go.sum"));
-//        supportingFiles.add(new SupportingFile(".travis.yml", "", ".travis.yml"));
+        supportingFiles.add(new SupportingFile("go.mod.mustache", "", "go.mod"));
+        supportingFiles.add(new SupportingFile("go.sum.mustache", "", "go.sum"));
+        supportingFiles.add(new SupportingFile(".travis.yml", "", ".travis.yml"));
         supportingFiles.add(new SupportingFile("utils.mustache", "", "utils.go"));
 
+        // Interhyp Custom Templates
         supportingFiles.add(new SupportingFile("all_model_in_one_file.mustache", "", "models.go"));
+        supportingFiles.add(new SupportingFile("clientAurest.mustache", "", "clientAurest.go"));
     }
 
     public void setUseOneOfDiscriminatorLookup(boolean useOneOfDiscriminatorLookup) {

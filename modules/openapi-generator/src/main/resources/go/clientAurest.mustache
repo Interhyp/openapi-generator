@@ -1,0 +1,293 @@
+{{>partial_header}}
+package {{packageName}}
+
+import (
+    "context"
+    "fmt"
+    "net/http"
+    "net/url"
+    "reflect"
+    "strings"
+    "time"
+
+    aulogging "github.com/StephanHCB/go-autumn-logging"
+    auapmclient "github.com/StephanHCB/go-autumn-restclient-apm/implementation/client"
+    aurestbreakerprometheus "github.com/StephanHCB/go-autumn-restclient-circuitbreaker-prometheus"
+    aurestbreaker "github.com/StephanHCB/go-autumn-restclient-circuitbreaker/implementation/breaker"
+    aurestclientprometheus "github.com/StephanHCB/go-autumn-restclient-prometheus"
+    aurestclientapi "github.com/StephanHCB/go-autumn-restclient/api"
+    aurestcaching "github.com/StephanHCB/go-autumn-restclient/implementation/caching"
+    auresthttpclient "github.com/StephanHCB/go-autumn-restclient/implementation/httpclient"
+    aurestrecorder "github.com/StephanHCB/go-autumn-restclient/implementation/recorder"
+    aurestlogging "github.com/StephanHCB/go-autumn-restclient/implementation/requestlogging"
+    aurestretry "github.com/StephanHCB/go-autumn-restclient/implementation/retry"
+{{#imports}}    "{{import}}"
+{{/imports}}
+)
+
+type Client interface {
+    Setup() error
+
+{{#apiInfo}}
+{{#apis}}
+{{#operations}}
+{{#operation}}
+    {{{nickname}}}(ctx context.Context{{#pathParams}}, {{paramName}} {{{dataType}}}{{/pathParams}}{{#bodyParams}}, {{paramName}} {{{dataType}}}{{/bodyParams}}{{#queryParams}}, {{paramName}} {{{dataType}}}{{/queryParams}}) ({{#returnType}}{{{.}}}, {{/returnType}}error)
+{{/operation}}
+{{/operations}}
+{{/apis}}
+{{/apiInfo}}
+}
+
+type ClientConfig struct {
+    BaseUrl string
+
+    BasicAuthUsername string
+    BasicAuthPassword string
+
+    CacheRetention time.Duration
+    CacheSize      int
+
+    LoggingConfigurer        func(client aurestclientapi.Client) aurestclientapi.Client
+    CircuitBreakerConfigurer func(client aurestclientapi.Client) aurestclientapi.Client
+    AmpConfigurer            func(client aurestclientapi.Client) aurestclientapi.Client
+    RetryConfigurer          func(client aurestclientapi.Client) aurestclientapi.Client
+    RecorderConfigurer       func(client aurestclientapi.Client) aurestclientapi.Client
+    CachingConfigurer        func(client aurestclientapi.Client, cacheRetentionSeconds time.Duration, cacheSize int) aurestclientapi.Client
+}
+
+func DefaultApiClientConfig(baseUrl string, basicAuthUsername string, basicAuthPassword string) ClientConfig {
+    return ClientConfig{
+        BaseUrl:                  baseUrl,
+        LoggingConfigurer:        setupLogging,
+        CircuitBreakerConfigurer: setupCircuitBreakerClient,
+        AmpConfigurer:            setupAmp,
+        RetryConfigurer:          setupRetryClient,
+        RecorderConfigurer:       setupRecorder,
+        CachingConfigurer:        setupCachingClient,
+        BasicAuthUsername:        basicAuthUsername,
+        BasicAuthPassword:        basicAuthPassword,
+        CacheRetention:           60 * time.Second,
+        CacheSize:                1000,
+    }
+}
+
+// APIClient manages communication with the {{appName}} API v{{version}}
+// In most cases there should be only one, shared, APIClient.
+type APIClient struct {
+    Config ClientConfig
+    Client aurestclientapi.Client
+}
+
+// NewAPIClient creates a new API client.
+func NewAPIClient(cfg ClientConfig) *APIClient {
+    return &APIClient{
+        Config: cfg,
+        Client: nil,
+    }
+}
+
+// --- setup ---
+func (c *APIClient) Setup() error {
+    if err := c.setupClientStack(); err != nil {
+        return err
+    }
+    return nil
+}
+
+func (c *APIClient) setupClientStack() error {
+    //allow tests to pre-populate
+    if c.Client != nil {
+        return nil
+    }
+
+    client, err := setupHttpClient(c.Config.BasicAuthUsername, c.Config.BasicAuthPassword)
+    if err != nil {
+        return err
+    }
+
+    if c.Config.LoggingConfigurer != nil {
+        client = c.Config.LoggingConfigurer(client)
+    }
+
+    if c.Config.CircuitBreakerConfigurer != nil {
+        client = c.Config.CircuitBreakerConfigurer(client)
+    }
+
+    if c.Config.AmpConfigurer != nil {
+        client = c.Config.AmpConfigurer(client)
+    }
+
+    if c.Config.RetryConfigurer != nil {
+        client = c.Config.RetryConfigurer(client)
+    }
+    if c.Config.RecorderConfigurer != nil {
+        client = c.Config.RecorderConfigurer(client)
+    }
+    if c.Config.CachingConfigurer != nil {
+        client = c.Config.CachingConfigurer(client, c.Config.CacheRetention, c.Config.CacheSize)
+    }
+
+    c.Client = client
+
+    return nil
+}
+
+func setupHttpClient(basicAuthUsername, basicAuthPassword string) (aurestclientapi.Client, error) {
+    client, err := auresthttpclient.New(0, nil, requestHeaderManipulator(basicAuthUsername, basicAuthPassword))
+    if err != nil {
+        return nil, err
+    }
+    aurestclientprometheus.InstrumentHttpClient(client)
+
+    return client, nil
+}
+
+func requestHeaderManipulator(basicAuthUsername, basicAuthPassword string) func(ctx context.Context, r *http.Request) {
+    return func(ctx context.Context, r *http.Request) {
+        ctxAuthorizationValue := ctx.Value("authorization")
+        if ctxAuthorizationValue != nil && ctxAuthorizationValue != "" {
+            r.Header.Set("Authorization", ctxAuthorizationValue.(string))
+        } else {
+            r.SetBasicAuth(basicAuthUsername, basicAuthPassword)
+        }
+    }
+}
+
+func setupCircuitBreakerClient(client aurestclientapi.Client) aurestclientapi.Client {
+    circuitBreakerWrapper := aurestbreaker.New(
+        client,
+        "{{appName}}",
+        100,
+        5*time.Minute,
+        60*time.Second,
+        // includes possible retries, once the context is cancelled further requests will fail directly
+        15*time.Second,
+    )
+    aurestbreakerprometheus.InstrumentCircuitBreakerClient(circuitBreakerWrapper)
+    return circuitBreakerWrapper
+}
+
+func setupRetryClient(client aurestclientapi.Client) aurestclientapi.Client {
+    retryWrapper := aurestretry.New(
+        client,
+        3,
+        retryCondition(),
+        betweenFailureAndRetry(),
+    )
+    aurestclientprometheus.InstrumentRetryClient(retryWrapper)
+    return retryWrapper
+}
+
+func retryCondition() aurestclientapi.RetryConditionCallback {
+    return func(_ context.Context, response *aurestclientapi.ParsedResponse, err error) bool {
+        return response.Status == http.StatusServiceUnavailable
+    }
+}
+
+func betweenFailureAndRetry() aurestclientapi.BeforeRetryCallback {
+    return func(ctx context.Context, originalResponse *aurestclientapi.ParsedResponse, originalError error) error {
+        aulogging.Logger.Ctx(ctx).Warn().Print("got 503 from {{appName}}-endpoint - retrying request")
+        return nil
+    }
+}
+
+func setupCachingClient(client aurestclientapi.Client, cacheRetentionSeconds time.Duration, cacheSize int) aurestclientapi.Client {
+    cacheWrapper := aurestcaching.New(
+        client,
+        func(ctx context.Context, method string, url string, requestBody interface{}) bool {
+            return method == http.MethodGet
+        },
+        func(ctx context.Context, method string, url string, requestBody interface{}, response *aurestclientapi.ParsedResponse) bool {
+            return response != nil && response.Status == http.StatusOK
+        },
+        nil,
+        cacheRetentionSeconds,
+        cacheSize,
+    )
+    aurestclientprometheus.InstrumentCacheClient(cacheWrapper)
+    return cacheWrapper
+}
+
+func setupLogging(client aurestclientapi.Client) aurestclientapi.Client {
+    return aurestlogging.New(client)
+}
+
+func setupAmp(client aurestclientapi.Client) aurestclientapi.Client {
+    return auapmclient.New(client)
+}
+
+func setupRecorder(client aurestclientapi.Client) aurestclientapi.Client {
+    return aurestrecorder.New(client)
+}
+
+// --- request implementations ---
+
+func (c *APIClient) call(ctx context.Context, method string, requestUrl string, requestBody interface{}, responseBodyPointer interface{}) error {
+    response := &aurestclientapi.ParsedResponse{
+        Body: responseBodyPointer,
+    }
+    err := c.Client.Perform(ctx, method, requestUrl, requestBody, response)
+    if err != nil {
+        return err
+    }
+
+    switch response.Status {
+        case
+            http.StatusOK,
+            http.StatusCreated,
+            http.StatusAccepted,
+            http.StatusNoContent:
+        return nil
+    }
+
+    return fmt.Errorf("received unexpected status %d from {{appName}} %s %s", response.Status, method, requestUrl)
+}
+
+// ---- api methods
+
+{{#apiInfo}}
+{{#apis}}
+{{#operations}}
+{{#operation}}
+
+func (a *APIClient) {{{nickname}}}(ctx context.Context{{#pathParams}}, {{paramName}} {{{dataType}}}{{/pathParams}}{{#bodyParams}}, {{paramName}} {{{dataType}}}{{/bodyParams}}{{#queryParams}}, {{paramName}} {{{dataType}}}{{/queryParams}}) ({{#returnType}}{{{.}}}, {{/returnType}}error) {
+    requestURL, _ := url.Parse(a.Config.BaseUrl + "{{{path}}}")
+{{#pathParams}}
+    withURLPathParam(requestURL, "{"+"{{baseName}}"+"}", parameterValueToString({{paramName}}))
+{{/pathParams}}
+{{#queryParams}}
+    withUrlQueryParam(requestURL, "{{baseName}}", parameterValueToString({{paramName}}))
+{{/queryParams}}
+
+    response := {{#returnType}}{{{.}}}{} {{/returnType}}{{^returnType}}new(any){{/returnType}}
+    err := a.call(ctx, http.Method{{httpMethod}}, requestURL.String(), {{#bodyParams}}{{paramName}}{{/bodyParams}}{{^bodyParams}}nil{{/bodyParams}}, &response)
+    return {{#returnType}}response, {{/returnType}}err
+}
+{{/operation}}
+{{/operations}}
+{{/apis}}
+{{/apiInfo}}
+
+
+// ---- help methods
+
+func withURLPathParam(u *url.URL, param, val string) *url.URL {
+    u.Path = strings.ReplaceAll(u.Path, param, val)
+    return u
+}
+
+func withUrlQueryParam(requestUrl *url.URL, valueName string, value string) {
+    if value != "" {
+        queryParams := requestUrl.Query()
+        queryParams.Set(valueName, value)
+        requestUrl.RawQuery = queryParams.Encode()
+    }
+}
+
+func parameterValueToString( obj interface{} ) string {
+    if reflect.TypeOf(obj).Kind() != reflect.Ptr {
+        return fmt.Sprintf("%v", obj)
+    }
+    return ""
+}
