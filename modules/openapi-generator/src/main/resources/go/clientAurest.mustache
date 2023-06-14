@@ -80,7 +80,7 @@ type APIClient struct {
 }
 
 // NewAPIClient creates a new API client.
-func NewAPIClient(cfg ClientConfig) *APIClient {
+func NewAPIClient(cfg ClientConfig) Client {
     return &APIClient{
         Config: cfg,
         Client: nil,
