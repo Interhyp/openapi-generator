@@ -33,6 +33,7 @@ type Client interface {
 {{#apis}}
 {{#operations}}
 {{#operation}}
+    {{{nickname}}}Request(ctx context.Context{{#pathParams}}, {{paramName}} {{{dataType}}}{{/pathParams}}) {{#structPrefix}}{{&classname}}{{/structPrefix}}{{^structPrefix}}Api{{/structPrefix}}{{operationId}}Request
     {{{nickname}}}(ctx context.Context{{#pathParams}}, {{paramName}} {{{dataType}}}{{/pathParams}}{{#bodyParams}}, {{paramName}} {{{dataType}}}{{/bodyParams}}{{#queryParams}}, {{paramName}} {{{dataType}}}{{/queryParams}}) ({{#returnType}}{{{.}}}, {{/returnType}}error)
 {{/operation}}
 {{/operations}}
@@ -250,11 +251,84 @@ func (c *APIClient) call(ctx context.Context, method string, requestUrl string, 
 }
 
 // ---- api methods
-
 {{#apiInfo}}
 {{#apis}}
 {{#operations}}
 {{#operation}}
+
+type {{#structPrefix}}{{&classname}}{{/structPrefix}}{{^structPrefix}}Api{{/structPrefix}}{{operationId}}Request struct {
+    ctx context.Context{{#generateInterfaces}}
+    ApiService APIClient
+{{/generateInterfaces}}{{^generateInterfaces}}
+    ApiService *APIClient
+{{/generateInterfaces}}
+{{#allParams}}
+    {{paramName}} {{^isPathParam}}{{^isFile}}*{{/isFile}}{{/isPathParam}}{{{dataType}}}
+{{/allParams}}
+}
+
+{{#allParams}}
+{{^isPathParam}}
+{{#description}}
+    // {{.}}
+{{/description}}
+{{#isDeprecated}}
+    // Deprecated
+{{/isDeprecated}}
+func (r {{#structPrefix}}{{&classname}}{{/structPrefix}}{{^structPrefix}}Api{{/structPrefix}}{{operationId}}Request) {{vendorExtensions.x-export-param-name}}({{paramName}} {{{dataType}}}) {{#structPrefix}}{{&classname}}{{/structPrefix}}{{^structPrefix}}Api{{/structPrefix}}{{operationId}}Request {
+    r.{{paramName}} = {{^isFile}}&{{/isFile}}{{paramName}}
+    return r
+}
+
+{{/isPathParam}}
+{{/allParams}}
+func (r *{{#structPrefix}}{{&classname}}{{/structPrefix}}{{^structPrefix}}Api{{/structPrefix}}{{operationId}}Request) Execute() ({{#returnType}}{{{.}}}, {{/returnType}}error) {
+    return r.ApiService.{{nickname}}Execute(*r)
+}
+
+/*
+{{operationId}} {{{summary}}}{{^summary}}Method for {{operationId}}{{/summary}}
+{{#notes}}
+
+{{{unescapedNotes}}}
+{{/notes}}
+
+@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().{{#pathParams}}
+    @param {{paramName}}{{#description}} {{{.}}}{{/description}}{{/pathParams}}
+@return {{#structPrefix}}{{&classname}}{{/structPrefix}}{{^structPrefix}}Api{{/structPrefix}}{{operationId}}Request
+{{#isDeprecated}}
+
+    Deprecated
+{{/isDeprecated}}
+*/
+func (a *APIClient) {{{nickname}}}Request(ctx context.Context{{#pathParams}}, {{paramName}} {{{dataType}}}{{/pathParams}}) {{#structPrefix}}{{&classname}}{{/structPrefix}}{{^structPrefix}}Api{{/structPrefix}}{{operationId}}Request {
+    return {{#structPrefix}}{{&classname}}{{/structPrefix}}{{^structPrefix}}Api{{/structPrefix}}{{operationId}}Request{
+        ApiService: a,
+        ctx: ctx,
+{{#pathParams}}
+        {{paramName}}: {{paramName}},
+{{/pathParams}}
+    }
+}
+
+// Execute executes the request{{#returnType}}
+//  @return {{{.}}}{{/returnType}}
+{{#isDeprecated}}
+// Deprecated
+{{/isDeprecated}}
+func (a *APIClient) {{nickname}}Execute(r {{#structPrefix}}{{&classname}}{{/structPrefix}}{{^structPrefix}}Api{{/structPrefix}}{{operationId}}Request) ({{#returnType}}{{{.}}}, {{/returnType}}error) {
+    requestURL, _ := url.Parse(a.Config.BaseUrl + "{{{path}}}")
+{{#pathParams}}
+    withURLPathParam(requestURL, "{"+"{{baseName}}"+"}", parameterValueToString(r.{{paramName}}))
+{{/pathParams}}
+{{#queryParams}}
+    withUrlQueryParam(requestURL, "{{baseName}}", parameterValueToString(r.{{paramName}}))
+{{/queryParams}}
+
+    response := {{#returnType}}{{{.}}}{} {{/returnType}}{{^returnType}}new(any){{/returnType}}
+    err := a.call(r.ctx, http.Method{{httpMethod}}, requestURL.String(), {{#bodyParams}}r.{{paramName}}{{/bodyParams}}{{^bodyParams}}nil{{/bodyParams}}, &response)
+    return {{#returnType}}response, {{/returnType}}err
+}
 
 func (a *APIClient) {{{nickname}}}(ctx context.Context{{#pathParams}}, {{paramName}} {{{dataType}}}{{/pathParams}}{{#bodyParams}}, {{paramName}} {{{dataType}}}{{/bodyParams}}{{#queryParams}}, {{paramName}} {{{dataType}}}{{/queryParams}}) ({{#returnType}}{{{.}}}, {{/returnType}}error) {
     requestURL, _ := url.Parse(a.Config.BaseUrl + "{{{path}}}")
@@ -275,7 +349,7 @@ func (a *APIClient) {{{nickname}}}(ctx context.Context{{#pathParams}}, {{paramNa
 {{/apiInfo}}
 
 
-// ---- help methods
+// ---- helper methods
 
 func withURLPathParam(u *url.URL, param, val string) *url.URL {
     u.Path = strings.ReplaceAll(u.Path, param, val)
