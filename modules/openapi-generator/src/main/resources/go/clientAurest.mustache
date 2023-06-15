@@ -21,6 +21,7 @@ import (
     aurestrecorder "github.com/StephanHCB/go-autumn-restclient/implementation/recorder"
     aurestlogging "github.com/StephanHCB/go-autumn-restclient/implementation/requestlogging"
     aurestretry "github.com/StephanHCB/go-autumn-restclient/implementation/retry"
+    "github.com/go-http-utils/headers"
 {{#imports}}    "{{import}}"
 {{/imports}}
 )
@@ -145,6 +146,8 @@ func setupHttpClient(basicAuthUsername, basicAuthPassword string) (aurestclienta
 
 func requestHeaderManipulator(basicAuthUsername, basicAuthPassword string) func(ctx context.Context, r *http.Request) {
     return func(ctx context.Context, r *http.Request) {
+        r.Header.Set(headers.Accept, aurestclientapi.ContentTypeApplicationJson)
+
         ctxAuthorizationValue := ctx.Value("authorization")
         if ctxAuthorizationValue != nil && ctxAuthorizationValue != "" {
             r.Header.Set("Authorization", ctxAuthorizationValue.(string))
