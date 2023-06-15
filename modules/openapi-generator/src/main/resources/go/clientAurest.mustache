@@ -49,6 +49,7 @@ type ClientConfig struct {
     CacheRetention time.Duration
     CacheSize      int
 
+    RequestHeaderManipulator func(ctx context.Context, r *http.Request)
     LoggingConfigurer        func(client aurestclientapi.Client) aurestclientapi.Client
     CircuitBreakerConfigurer func(client aurestclientapi.Client) aurestclientapi.Client
     AmpConfigurer            func(client aurestclientapi.Client) aurestclientapi.Client
@@ -60,6 +61,7 @@ type ClientConfig struct {
 func DefaultApiClientConfig(baseUrl string, basicAuthUsername string, basicAuthPassword string) ClientConfig {
     return ClientConfig{
         BaseUrl:                  baseUrl,
+        RequestHeaderManipulator: requestHeaderManipulator(basicAuthUsername, basicAuthPassword),
         LoggingConfigurer:        setupLogging,
         CircuitBreakerConfigurer: setupCircuitBreakerClient,
         AmpConfigurer:            setupAmp,
@@ -102,7 +104,7 @@ func (c *APIClient) setupClientStack() error {
         return nil
     }
 
-    client, err := setupHttpClient(c.Config.BasicAuthUsername, c.Config.BasicAuthPassword)
+    client, err := setupHttpClient(c.Config.RequestHeaderManipulator)
     if err != nil {
         return err
     }
@@ -134,8 +136,8 @@ func (c *APIClient) setupClientStack() error {
     return nil
 }
 
-func setupHttpClient(basicAuthUsername, basicAuthPassword string) (aurestclientapi.Client, error) {
-    client, err := auresthttpclient.New(0, nil, requestHeaderManipulator(basicAuthUsername, basicAuthPassword))
+func setupHttpClient(configuredHeaderManipulator func(ctx context.Context, r *http.Request)) (aurestclientapi.Client, error) {
+    client, err := auresthttpclient.New(0, nil, configuredHeaderManipulator)
     if err != nil {
         return nil, err
     }
