@@ -2,10 +2,38 @@
 
 package {{packageName}}
 
-import "time"
+import (
+{{#imports}}
+    "{{import}}"
+{{/imports}}
+)
 
 {{#models}}
     {{#model}}
+{{#isEnum}}
+type {{{classname}}} {{{format}}}{{^format}}{{dataType}}{{/format}}
+
+// List of {{{name}}}
+const (
+{{#allowableValues}}
+    {{#enumVars}}
+        {{^-first}}
+        {{/-first}}
+        {{#enumClassPrefix}}{{{classname.toUpperCase}}}_{{/enumClassPrefix}}{{name}} {{{classname}}} = {{{value}}}
+    {{/enumVars}}
+{{/allowableValues}}
+)
+
+// All allowed values of {{{classname}}} enum
+var Allowed{{{classname}}}EnumValues = []{{{classname}}}{
+{{#allowableValues}}
+    {{#enumVars}}
+        {{{value}}},
+    {{/enumVars}}
+{{/allowableValues}}
+}
+{{/isEnum}}
+{{^isEnum}}
 type {{classname}} struct {
 {{#parent}}
     {{^isMap}}
@@ -32,6 +60,7 @@ type {{classname}} struct {
     AdditionalProperties map[string]interface{}
 {{/isAdditionalPropertiesTrue}}
 }
-
+{{/isEnum}}
     {{/model}}
+
 {{/models}}
