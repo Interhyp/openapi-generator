@@ -3,10 +3,15 @@
 package {{packageName}}
 
 import (
+    "time"
 {{#imports}}
     "{{import}}"
 {{/imports}}
 )
+
+type _dummyTime struct {
+    Timestamp *time.Time
+}
 
 {{#models}}
     {{#model}}
