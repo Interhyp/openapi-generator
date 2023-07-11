@@ -329,7 +329,9 @@ func (a *APIClient) {{nickname}}Execute(r *{{#structPrefix}}{{&classname}}{{/str
 <%={{ }}=%>
 {{/pathParams}}
 {{#queryParams}}
-    withUrlQueryParam(requestURL, "{{baseName}}", parameterValueToString(r.{{paramName}}))
+    if r.{{paramName}}!=nil {
+        withUrlQueryParam(requestURL, "{{baseName}}", {{#isString}}*r.{{paramName}}{{/isString}}{{^isString}}parameterValueToString(*r.{{paramName}}){{/isString}})
+    }
 {{/queryParams}}
 {{#formParams}}
     {{#isFile}}
@@ -431,9 +433,6 @@ func withUrlQueryParam(requestUrl *urlUtil.URL, valueName string, value string) 
     }
 }
 
-func parameterValueToString( obj interface{} ) string {
-    if obj != nil {
-        return fmt.Sprintf("%v", obj)
-    }
-    return ""
+func parameterValueToString(obj interface{}) string {
+    return fmt.Sprint(obj)
 }
