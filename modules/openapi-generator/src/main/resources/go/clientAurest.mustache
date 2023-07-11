@@ -10,7 +10,6 @@ import (
     "mime/multipart"
     "net/http"
     urlUtil "net/url"
-    "reflect"
     "strings"
     "time"
 
@@ -298,14 +297,14 @@ type {{#structPrefix}}{{&classname}}{{/structPrefix}}{{^structPrefix}}Api{{/stru
 {{#isDeprecated}}
     // Deprecated
 {{/isDeprecated}}
-func (r {{#structPrefix}}{{&classname}}{{/structPrefix}}{{^structPrefix}}Api{{/structPrefix}}{{operationId}}Request) {{vendorExtensions.x-export-param-name}}({{paramName}} {{{dataType}}}) {{#structPrefix}}{{&classname}}{{/structPrefix}}{{^structPrefix}}Api{{/structPrefix}}{{operationId}}Request {
+func (r *{{#structPrefix}}{{&classname}}{{/structPrefix}}{{^structPrefix}}Api{{/structPrefix}}{{operationId}}Request) {{vendorExtensions.x-export-param-name}}({{paramName}} {{{dataType}}}) *{{#structPrefix}}{{&classname}}{{/structPrefix}}{{^structPrefix}}Api{{/structPrefix}}{{operationId}}Request {
     r.{{paramName}} = {{^isFile}}&{{/isFile}}{{paramName}}
     return r
 }
 
 {{/isPathParam}}
 {{/allParams}}
-func (r {{#structPrefix}}{{&classname}}{{/structPrefix}}{{^structPrefix}}Api{{/structPrefix}}{{operationId}}Request) Execute() ({{#returnType}}{{{.}}}, {{/returnType}}error) {
+func (r *{{#structPrefix}}{{&classname}}{{/structPrefix}}{{^structPrefix}}Api{{/structPrefix}}{{operationId}}Request) Execute() ({{#returnType}}{{{.}}}, {{/returnType}}error) {
     return r.ApiService.{{nickname}}Execute(r)
 }
 
@@ -322,11 +321,11 @@ func (a *APIClient) {{{nickname}}}Request(ctx context.Context{{#pathParams}}, {{
 {{#isDeprecated}}
 // Deprecated
 {{/isDeprecated}}
-func (a *APIClient) {{nickname}}Execute(r {{#structPrefix}}{{&classname}}{{/structPrefix}}{{^structPrefix}}Api{{/structPrefix}}{{operationId}}Request) ({{#returnType}}{{{.}}}, {{/returnType}}error) {
+func (a *APIClient) {{nickname}}Execute(r *{{#structPrefix}}{{&classname}}{{/structPrefix}}{{^structPrefix}}Api{{/structPrefix}}{{operationId}}Request) ({{#returnType}}{{{.}}}, {{/returnType}}error) {
     requestURL, _ := urlUtil.Parse(a.Config.BaseUrl + "{{{path}}}")
 {{#pathParams}}
 {{=<% %>=}}
-    withURLPathParam(requestURL, "{<%baseName%>}", parameterValueToString(r.<%paramName%>))
+    withURLPathParam(requestURL, "{<%baseName%>}", <%#isString%>r.<%paramName%><%/isString%><%^isString%>parameterValueToString(r.<%paramName%>)<%/isString%>)
 <%={{ }}=%>
 {{/pathParams}}
 {{#queryParams}}
@@ -360,11 +359,11 @@ func (a *APIClient) {{{nickname}}}(ctx context.Context{{#pathParams}}, {{paramNa
     requestURL, _ := urlUtil.Parse(a.Config.BaseUrl + "{{{path}}}")
 {{#pathParams}}
 {{=<% %>=}}
-    withURLPathParam(requestURL, "{<%baseName%>}", parameterValueToString(<%paramName%>))
+    withURLPathParam(requestURL, "{<%baseName%>}", <%#isString%><%paramName%><%/isString%><%^isString%>parameterValueToString(<%paramName%>)<%/isString%>)
 <%={{ }}=%>
 {{/pathParams}}
 {{#queryParams}}
-    withUrlQueryParam(requestURL, "{{baseName}}", parameterValueToString({{paramName}}))
+    withUrlQueryParam(requestURL, "{{baseName}}", {{#isString}}{{paramName}}{{/isString}}{{^isString}}parameterValueToString({{paramName}}){{/isString}})
 {{/queryParams}}
 {{#formParams}}
     {{#isFile}}
@@ -384,7 +383,7 @@ func (a *APIClient) {{{nickname}}}(ctx context.Context{{#pathParams}}, {{paramNa
 {{/isString}}
 {{/returnProperty}}
 {{^returnType}}
-response := make(map[string]interface{})
+    response := make(map[string]interface{})
 {{/returnType}}
     err := a.call(ctx, http.Method{{httpMethod}}, requestURL.String(), {{#bodyParams}}{{paramName}}{{/bodyParams}}{{^bodyParams}}{{#formParams}}{{#isFile}}request{{/isFile}}{{/formParams}}{{^formParams}}nil{{/formParams}}{{/bodyParams}}, &response)
     return {{#returnProperty}}{{#isString}}string(*response){{/isString}}{{^isString}}response{{/isString}}, {{/returnProperty}}err
@@ -433,7 +432,7 @@ func withUrlQueryParam(requestUrl *urlUtil.URL, valueName string, value string) 
 }
 
 func parameterValueToString( obj interface{} ) string {
-    if reflect.TypeOf(obj).Kind() != reflect.Ptr {
+    if obj != nil {
         return fmt.Sprintf("%v", obj)
     }
     return ""
