@@ -263,7 +263,7 @@ public class GoModelTest {
         final DefaultCodegen codegen = new GoClientCodegen();
         final Schema model1 = new Schema().type("file");
         Assert.assertEquals(codegen.getSchemaType(model1), "map[string]string");
-        Assert.assertEquals(codegen.getTypeDeclaration(model1), "*os.File");
+        Assert.assertEquals(codegen.getTypeDeclaration(model1), "map[string]string");
 
         final Schema model2 = new Schema().$ref("#/definitions/File");
         Assert.assertEquals(codegen.getSchemaType(model2), "File");
