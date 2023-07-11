@@ -3,10 +3,13 @@
 package {{packageName}}
 
 import (
+    "bytes"
     "context"
     "fmt"
+    "io"
+    "mime/multipart"
     "net/http"
-    "net/url"
+    urlUtil "net/url"
     "reflect"
     "strings"
     "time"
@@ -37,7 +40,7 @@ type Client interface {
 {{#operations}}
 {{#operation}}
     {{{nickname}}}Request(ctx context.Context{{#pathParams}}, {{paramName}} {{{dataType}}}{{/pathParams}}) {{#structPrefix}}{{&classname}}{{/structPrefix}}{{^structPrefix}}Api{{/structPrefix}}{{operationId}}Request
-    {{{nickname}}}(ctx context.Context{{#pathParams}}, {{paramName}} {{{dataType}}}{{/pathParams}}{{#bodyParams}}, {{paramName}} {{{dataType}}}{{/bodyParams}}{{#queryParams}}, {{paramName}} {{{dataType}}}{{/queryParams}}) ({{#returnType}}{{{.}}}, {{/returnType}}error)
+    {{{nickname}}}(ctx context.Context{{#pathParams}}, {{paramName}} {{{dataType}}}{{/pathParams}}{{#bodyParams}}, {{paramName}} {{{dataType}}}{{/bodyParams}}{{#formParams}}{{#isFile}}, {{paramName}} {{{dataType}}}{{/isFile}}{{/formParams}}{{#queryParams}}, {{paramName}} {{{dataType}}}{{/queryParams}}) ({{#returnType}}{{{.}}}, {{/returnType}}error)
 {{/operation}}
 {{/operations}}
 {{/apis}}
@@ -320,31 +323,71 @@ func (a *APIClient) {{{nickname}}}Request(ctx context.Context{{#pathParams}}, {{
 // Deprecated
 {{/isDeprecated}}
 func (a *APIClient) {{nickname}}Execute(r {{#structPrefix}}{{&classname}}{{/structPrefix}}{{^structPrefix}}Api{{/structPrefix}}{{operationId}}Request) ({{#returnType}}{{{.}}}, {{/returnType}}error) {
-    requestURL, _ := url.Parse(a.Config.BaseUrl + "{{{path}}}")
+    requestURL, _ := urlUtil.Parse(a.Config.BaseUrl + "{{{path}}}")
 {{#pathParams}}
-    withURLPathParam(requestURL, "{"+"{{baseName}}"+"}", parameterValueToString(r.{{paramName}}))
+{{=<% %>=}}
+    withURLPathParam(requestURL, "{<%baseName%>}", parameterValueToString(r.<%paramName%>))
+<%={{ }}=%>
 {{/pathParams}}
 {{#queryParams}}
     withUrlQueryParam(requestURL, "{{baseName}}", parameterValueToString(r.{{paramName}}))
 {{/queryParams}}
+{{#formParams}}
+    {{#isFile}}
+    request, multipartErr := createMultipartRequestForFile(r.ctx, r.{{paramName}}["fileName"], r.{{paramName}}["fileContent"])
+    if multipartErr != nil {
+        return {{#returnType}}{{{.}}}{} {{/returnType}}, multipartErr
+    }
+    {{/isFile}}
+{{/formParams}}
 
-    response := {{#returnType}}{{{.}}}{} {{/returnType}}{{^returnType}}new(any){{/returnType}}
-    err := a.call(r.ctx, http.Method{{httpMethod}}, requestURL.String(), {{#bodyParams}}r.{{paramName}}{{/bodyParams}}{{^bodyParams}}nil{{/bodyParams}}, &response)
-    return {{#returnType}}response, {{/returnType}}err
+{{#returnProperty}}
+{{#isString}}
+    var response *[]byte
+{{/isString}}
+{{^isString}}
+    response := {{returnType}}{}
+{{/isString}}
+{{/returnProperty}}
+{{^returnType}}
+    response := make(map[string]interface{})
+{{/returnType}}
+    err := a.call(r.ctx, http.Method{{httpMethod}}, requestURL.String(), {{#bodyParams}}r.{{paramName}}{{/bodyParams}}{{^bodyParams}}{{#formParams}}{{#isFile}}request{{/isFile}}{{/formParams}}{{^formParams}}nil{{/formParams}}{{/bodyParams}}, &response)
+    return {{#returnProperty}}{{#isString}}string(*response){{/isString}}{{^isString}}response{{/isString}}, {{/returnProperty}}err
 }
 
-func (a *APIClient) {{{nickname}}}(ctx context.Context{{#pathParams}}, {{paramName}} {{{dataType}}}{{/pathParams}}{{#bodyParams}}, {{paramName}} {{{dataType}}}{{/bodyParams}}{{#queryParams}}, {{paramName}} {{{dataType}}}{{/queryParams}}) ({{#returnType}}{{{.}}}, {{/returnType}}error) {
-    requestURL, _ := url.Parse(a.Config.BaseUrl + "{{{path}}}")
+func (a *APIClient) {{{nickname}}}(ctx context.Context{{#pathParams}}, {{paramName}} {{{dataType}}}{{/pathParams}}{{#bodyParams}}, {{paramName}} {{{dataType}}}{{/bodyParams}}{{#formParams}}{{#isFile}}, {{paramName}} {{{dataType}}}{{/isFile}}{{/formParams}}{{#queryParams}}, {{paramName}} {{{dataType}}}{{/queryParams}}) ({{#returnType}}{{{.}}}, {{/returnType}}error) {
+    requestURL, _ := urlUtil.Parse(a.Config.BaseUrl + "{{{path}}}")
 {{#pathParams}}
-    withURLPathParam(requestURL, "{"+"{{baseName}}"+"}", parameterValueToString({{paramName}}))
+{{=<% %>=}}
+    withURLPathParam(requestURL, "{<%baseName%>}", parameterValueToString(<%paramName%>))
+<%={{ }}=%>
 {{/pathParams}}
 {{#queryParams}}
     withUrlQueryParam(requestURL, "{{baseName}}", parameterValueToString({{paramName}}))
 {{/queryParams}}
+{{#formParams}}
+    {{#isFile}}
+    request, multipartErr := createMultipartRequestForFile(ctx, {{paramName}}["fileName"], {{paramName}}["fileContent"])
+    if multipartErr != nil {
+        return {{#returnType}}{{{.}}}{} {{/returnType}}, multipartErr
+    }
+    {{/isFile}}
+{{/formParams}}
 
-    response := {{#returnType}}{{{.}}}{} {{/returnType}}{{^returnType}}new(any){{/returnType}}
-    err := a.call(ctx, http.Method{{httpMethod}}, requestURL.String(), {{#bodyParams}}{{paramName}}{{/bodyParams}}{{^bodyParams}}nil{{/bodyParams}}, &response)
-    return {{#returnType}}response, {{/returnType}}err
+{{#returnProperty}}
+{{#isString}}
+    var response *[]byte
+{{/isString}}
+{{^isString}}
+    response := {{returnType}}{}
+{{/isString}}
+{{/returnProperty}}
+{{^returnType}}
+response := make(map[string]interface{})
+{{/returnType}}
+    err := a.call(ctx, http.Method{{httpMethod}}, requestURL.String(), {{#bodyParams}}{{paramName}}{{/bodyParams}}{{^bodyParams}}{{#formParams}}{{#isFile}}request{{/isFile}}{{/formParams}}{{^formParams}}nil{{/formParams}}{{/bodyParams}}, &response)
+    return {{#returnProperty}}{{#isString}}string(*response){{/isString}}{{^isString}}response{{/isString}}, {{/returnProperty}}err
 }
 {{/operation}}
 {{/operations}}
@@ -352,14 +395,36 @@ func (a *APIClient) {{{nickname}}}(ctx context.Context{{#pathParams}}, {{paramNa
 {{/apiInfo}}
 
 
+func createMultipartRequestForFile(ctx context.Context, fileName string, fileContent string) (aurestclientapi.CustomRequestBody, error) {
+    bufferBytes := &bytes.Buffer{}
+
+    writer := multipart.NewWriter(bufferBytes)
+    defer func(writer *multipart.Writer) {
+        _ = writer.Close()
+    }(writer)
+
+    part, _ := writer.CreateFormFile("files", fmt.Sprintf("%s.txt", fileName))
+    _, err := io.Copy(part, strings.NewReader(fileContent))
+    if err != nil {
+        return aurestclientapi.CustomRequestBody{}, err
+    }
+
+    return aurestclientapi.CustomRequestBody{
+        BodyReader:  bufferBytes,
+        BodyLength:  len(fileContent),
+        ContentType: writer.FormDataContentType(),
+    }, nil
+}
+
+
 // ---- helper methods
 
-func withURLPathParam(u *url.URL, param, val string) *url.URL {
+func withURLPathParam(u *urlUtil.URL, param, val string) *urlUtil.URL {
     u.Path = strings.ReplaceAll(u.Path, param, val)
     return u
 }
 
-func withUrlQueryParam(requestUrl *url.URL, valueName string, value string) {
+func withUrlQueryParam(requestUrl *urlUtil.URL, valueName string, value string) {
     if value != "" {
         queryParams := requestUrl.Query()
         queryParams.Set(valueName, value)

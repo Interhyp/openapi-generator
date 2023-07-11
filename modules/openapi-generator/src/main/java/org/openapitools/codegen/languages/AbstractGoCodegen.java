@@ -122,7 +122,7 @@ public abstract class AbstractGoCodegen extends DefaultCodegen implements Codege
         typeMapping.put("DateTime", "time.Time");
         typeMapping.put("password", "string");
         typeMapping.put("File", "*os.File");
-        typeMapping.put("file", "*os.File");
+        typeMapping.put("file", "map[string]string");
         typeMapping.put("binary", "*os.File");
         typeMapping.put("ByteArray", "string");
         typeMapping.put("null", "nil");
