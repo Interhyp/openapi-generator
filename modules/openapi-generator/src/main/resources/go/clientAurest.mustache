@@ -269,7 +269,7 @@ func (c *APIClient) call(ctx context.Context, method string, requestUrl string, 
         return nil
     }
 
-    return newError(fmt.Sprintf("received unexpected status %d from {{appName}} %s %s", response.Status, method, requestUrl), response.Status)
+    return NewError(fmt.Sprintf("received unexpected status %d from {{appName}} %s %s", response.Status, method, requestUrl), response.Status)
 }
 
 // ---- error methods
@@ -282,7 +282,7 @@ type HttpError struct {
     status int
 }
 
-func newError(message string, status int) error {
+func NewError(message string, status int) error {
     return &HttpError{
         err:    fmt.Errorf(message),
         status: status,
