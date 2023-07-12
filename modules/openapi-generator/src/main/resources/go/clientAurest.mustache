@@ -364,7 +364,14 @@ func (a *APIClient) {{nickname}}Execute(r *{{#structPrefix}}{{&classname}}{{/str
 {{/pathParams}}
 {{#queryParams}}
     if r.{{paramName}}!=nil {
+{{#isArray}}
+        for _, ___element := range *r.{{baseName}} {
+            withUrlQueryParam(requestURL, "{{baseName}}", {{#items}}{{#isString}}___element{{/isString}}{{^isString}}parameterValueToString(___element){{/isString}}{{/items}})
+        }
+{{/isArray}}
+{{^isArray}}
         withUrlQueryParam(requestURL, "{{baseName}}", {{#isString}}*r.{{paramName}}{{/isString}}{{^isString}}parameterValueToString(*r.{{paramName}}){{/isString}})
+{{/isArray}}
     }
 {{/queryParams}}
 {{#formParams}}
@@ -399,7 +406,14 @@ func (a *APIClient) {{{nickname}}}(ctx context.Context{{#pathParams}}, {{paramNa
 <%={{ }}=%>
 {{/pathParams}}
 {{#queryParams}}
+{{#isArray}}
+    for _, ___element := range {{baseName}} {
+        withUrlQueryParam(requestURL, "{{baseName}}", {{#items}}{{#isString}}___element{{/isString}}{{^isString}}parameterValueToString(___element){{/isString}}{{/items}})
+    }
+{{/isArray}}
+{{^isArray}}
     withUrlQueryParam(requestURL, "{{baseName}}", {{#isString}}{{paramName}}{{/isString}}{{^isString}}parameterValueToString({{paramName}}){{/isString}})
+{{/isArray}}
 {{/queryParams}}
 {{#formParams}}
     {{#isFile}}
@@ -462,7 +476,7 @@ func withURLPathParam(u *urlUtil.URL, param, val string) *urlUtil.URL {
 func withUrlQueryParam(requestUrl *urlUtil.URL, valueName string, value string) {
     if value != "" {
         queryParams := requestUrl.Query()
-        queryParams.Set(valueName, value)
+        queryParams.Add(valueName, value)
         requestUrl.RawQuery = queryParams.Encode()
     }
 }
