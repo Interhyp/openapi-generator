@@ -269,7 +269,41 @@ func (c *APIClient) call(ctx context.Context, method string, requestUrl string, 
         return nil
     }
 
-    return fmt.Errorf("received unexpected status %d from {{appName}} %s %s", response.Status, method, requestUrl)
+    return newError(fmt.Sprintf("received unexpected status %d from {{appName}} %s %s", response.Status, method, requestUrl), response.Status)
+}
+
+// ---- error methods
+type Error interface {
+    IsHttpError() bool
+}
+
+type HttpError struct {
+    err    error
+    status int
+}
+
+func newError(message string, status int) error {
+    return &HttpError{
+        err:    fmt.Errorf(message),
+        status: status,
+    }
+}
+
+func (e *HttpError) Error() string {
+    return e.err.Error()
+}
+
+func (e *HttpError) Status() int {
+    return e.status
+}
+
+func (e *HttpError) IsHttpError() bool {
+    return true
+}
+
+func IsHttpError(err error) bool {
+    _, ok := err.(Error)
+    return ok
 }
 
 // ---- api methods
