@@ -32,7 +32,7 @@ import (
 const Authorization_ctx_value = "authorization"
 
 type Client interface {
-    Setup() error
+    Setup(cfg *ClientConfig) error
 
 {{#apiInfo}}
 {{#apis}}
@@ -91,56 +91,50 @@ func DefaultApiClientConfig(baseUrl string) *ClientConfig {
 }
 
 type APIClient struct {
-	Config *ClientConfig
+    BaseUrl string
 	Client aurestclientapi.Client
 }
 
-func NewAPIClient(cfg *ClientConfig) Client {
+func NewAPIClient() Client {
     return &APIClient{
-        Config: cfg,
         Client: nil,
     }
 }
 
 // --- setup ---
-func (c *APIClient) Setup() error {
-    if err := c.setupClientStack(); err != nil {
-        return err
-    }
-    return nil
-}
+func (c *APIClient) Setup(cfg *ClientConfig) error {
+    c.BaseUrl = cfg.BaseUrl
 
-func (c *APIClient) setupClientStack() error {
     //allow tests to pre-populate
     if c.Client != nil {
         return nil
     }
 
-	client, err := setupHttpClient(c.Config.RequestManipulator)
-	if err != nil {
-		return err
-	}
-
-    if c.Config.LoggingConfigurer != nil {
-        client = c.Config.LoggingConfigurer(client)
+    client, err := setupHttpClient(cfg.RequestManipulator)
+    if err != nil {
+        return err
     }
 
-    if c.Config.CircuitBreakerConfigurer != nil {
-        client = c.Config.CircuitBreakerConfigurer(client)
+    if cfg.LoggingConfigurer != nil {
+        client = cfg.LoggingConfigurer(client)
     }
 
-    if c.Config.ApmConfigurer != nil {
-        client = c.Config.ApmConfigurer(client)
+    if cfg.CircuitBreakerConfigurer != nil {
+        client = cfg.CircuitBreakerConfigurer(client)
     }
 
-    if c.Config.RetryConfigurer != nil {
-        client = c.Config.RetryConfigurer(client)
+    if cfg.ApmConfigurer != nil {
+        client = cfg.ApmConfigurer(client)
     }
-    if c.Config.RecorderConfigurer != nil {
-        client = c.Config.RecorderConfigurer(client)
+
+    if cfg.RetryConfigurer != nil {
+        client = cfg.RetryConfigurer(client)
     }
-    if c.Config.CachingConfigurer != nil {
-        client = c.Config.CachingConfigurer(client, c.Config.CacheRetention, c.Config.CacheSize)
+    if cfg.RecorderConfigurer != nil {
+        client = cfg.RecorderConfigurer(client)
+    }
+    if cfg.CachingConfigurer != nil {
+        client = cfg.CachingConfigurer(client, cfg.CacheRetention, cfg.CacheSize)
     }
 
     c.Client = client
@@ -356,7 +350,7 @@ func (a *APIClient) {{{nickname}}}Request(ctx context.Context{{#pathParams}}, {{
 // Deprecated
 {{/isDeprecated}}
 func (a *APIClient) {{nickname}}Execute(r *{{#structPrefix}}{{&classname}}{{/structPrefix}}{{^structPrefix}}Api{{/structPrefix}}{{operationId}}Request) ({{#returnType}}{{{.}}}, {{/returnType}}error) {
-    requestURL, _ := urlUtil.Parse(a.Config.BaseUrl + "{{{path}}}")
+    requestURL, _ := urlUtil.Parse(a.BaseUrl + "{{{path}}}")
 {{#pathParams}}
 {{=<% %>=}}
     withURLPathParam(requestURL, "{<%baseName%>}", <%#isString%>r.<%paramName%><%/isString%><%^isString%>parameterValueToString(r.<%paramName%>)<%/isString%>)
@@ -399,7 +393,7 @@ func (a *APIClient) {{nickname}}Execute(r *{{#structPrefix}}{{&classname}}{{/str
 }
 
 func (a *APIClient) {{{nickname}}}(ctx context.Context{{#pathParams}}, {{paramName}} {{{dataType}}}{{/pathParams}}{{#bodyParams}}, {{paramName}} {{{dataType}}}{{/bodyParams}}{{#formParams}}{{#isFile}}, {{paramName}} {{{dataType}}}{{/isFile}}{{/formParams}}{{#queryParams}}, {{paramName}} {{{dataType}}}{{/queryParams}}) ({{#returnType}}{{{.}}}, {{/returnType}}error) {
-    requestURL, _ := urlUtil.Parse(a.Config.BaseUrl + "{{{path}}}")
+    requestURL, _ := urlUtil.Parse(a.BaseUrl + "{{{path}}}")
 {{#pathParams}}
 {{=<% %>=}}
     withURLPathParam(requestURL, "{<%baseName%>}", <%#isString%><%paramName%><%/isString%><%^isString%>parameterValueToString(<%paramName%>)<%/isString%>)
