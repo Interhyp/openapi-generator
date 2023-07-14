@@ -463,7 +463,7 @@ func createMultipartRequestForFile(ctx context.Context, fileName string, fileCon
 // ---- helper methods
 
 func withURLPathParam(u *urlUtil.URL, param, val string) *urlUtil.URL {
-    u.Path = strings.ReplaceAll(u.Path, param, val)
+    u.Path = strings.ReplaceAll(u.Path, param, urlUtil.PathEscape(val))
     return u
 }
 
