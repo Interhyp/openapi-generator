@@ -353,7 +353,7 @@ func (a *APIClient) {{nickname}}Execute(r *{{#structPrefix}}{{&classname}}{{/str
     fullUrlValue := a.BaseUrl + "{{{path}}}"
 {{#pathParams}}
     {{=<% %>=}}
-    fullUrlValue = strings.ReplaceAll(fullUrlValue, "{<%baseName%>}", urlUtil.PathEscape(<%#isString%>r.<%paramName%><%/isString%><%^isString%>parameterValueToString(r.<%paramName%>)<%/isString%>))
+    fullUrlValue = strings.ReplaceAll(fullUrlValue, "{<%baseName%>}", <%^isAllowReserved%>urlUtil.PathEscape(<%/isAllowReserved%><%#isString%>r.<%paramName%><%/isString%><%^isString%>parameterValueToString(r.<%paramName%>)<%/isString%><%^isAllowReserved%>)<%/isAllowReserved%>)
     <%={{ }}=%>
 {{/pathParams}}
     requestURL, _ := urlUtil.Parse(fullUrlValue)
@@ -369,7 +369,6 @@ func (a *APIClient) {{nickname}}Execute(r *{{#structPrefix}}{{&classname}}{{/str
 {{/isArray}}
     }
 {{/queryParams}}
-
 {{#formParams}}
     {{#isFile}}
     request, multipartErr := createMultipartRequestForFile(r.ctx, r.{{paramName}}["fileName"], r.{{paramName}}["fileContent"])
@@ -398,7 +397,7 @@ func (a *APIClient) {{{nickname}}}(ctx context.Context{{#pathParams}}, {{paramNa
     fullUrlValue := a.BaseUrl + "{{{path}}}"
 {{#pathParams}}
 {{=<% %>=}}
-    fullUrlValue = strings.ReplaceAll(fullUrlValue, "{<%baseName%>}", urlUtil.PathEscape(<%#isString%><%paramName%><%/isString%><%^isString%>parameterValueToString(<%paramName%>)<%/isString%>))
+    fullUrlValue = strings.ReplaceAll(fullUrlValue, "{<%baseName%>}", <%^isAllowReserved%>urlUtil.PathEscape(<%/isAllowReserved%><%#isString%><%paramName%><%/isString%><%^isString%>parameterValueToString(<%paramName%>)<%/isString%><%^isAllowReserved%>)<%/isAllowReserved%>)
 <%={{ }}=%>
 {{/pathParams}}
     requestURL, _ := urlUtil.Parse(fullUrlValue)
@@ -413,7 +412,6 @@ func (a *APIClient) {{{nickname}}}(ctx context.Context{{#pathParams}}, {{paramNa
     withUrlQueryParam(requestURL, "{{baseName}}", {{#isString}}{{paramName}}{{/isString}}{{^isString}}parameterValueToString({{paramName}}){{/isString}})
 {{/isArray}}
 {{/queryParams}}
-
 {{#formParams}}
     {{#isFile}}
     request, multipartErr := createMultipartRequestForFile(ctx, {{paramName}}["fileName"], {{paramName}}["fileContent"])
