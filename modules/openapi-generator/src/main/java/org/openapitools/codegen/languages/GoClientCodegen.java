@@ -464,16 +464,16 @@ public class GoClientCodegen extends AbstractGoCodegen {
                     || (param.isAnyType && !param.isModel)) {
                     continue;
                 }
-                if (param.isDateTime) {
-                    // Note this could have been done by adding the following line in processOpts(),
-                    // however, we only want to represent the DateTime object as NullableTime if
-                    // it's marked as nullable in the spec.
-                    //    typeMapping.put("DateTime", "NullableTime");
-                    param.dataType = "NullableTime";
-                } else {
-                    param.dataType = "Nullable" + Character.toUpperCase(param.dataType.charAt(0))
-                        + param.dataType.substring(1);
-                }
+//                if (param.isDateTime) {
+//                    // Note this could have been done by adding the following line in processOpts(),
+//                    // however, we only want to represent the DateTime object as NullableTime if
+//                    // it's marked as nullable in the spec.
+//                    //    typeMapping.put("DateTime", "NullableTime");
+//                    param.dataType = "NullableTime";
+//                } else {
+//                    param.dataType = "Nullable" + Character.toUpperCase(param.dataType.charAt(0))
+//                        + param.dataType.substring(1);
+//                }
             }
 
             // additional import for different cases

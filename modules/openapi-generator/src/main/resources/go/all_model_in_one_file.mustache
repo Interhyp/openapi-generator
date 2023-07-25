@@ -59,7 +59,7 @@ type {{classname}} struct {
     {{#deprecated}}
         // Deprecated
     {{/deprecated}}
-    {{name}} {{^required}}{{^isNullable}}{{^isArray}}{{^isFreeFormObject}}*{{/isFreeFormObject}}{{/isArray}}{{/isNullable}}{{/required}}{{{dataType}}} `yaml:"{{#isWriteOnly}}-{{/isWriteOnly}}{{^isWriteOnly}}{{baseName}}{{^required}},omitempty{{/required}}{{/isWriteOnly}}" json:"{{#isWriteOnly}}-{{/isWriteOnly}}{{^isWriteOnly}}{{baseName}}{{^required}},omitempty{{/required}}{{/isWriteOnly}}"{{#withXml}} xml:"{{baseName}}{{#isXmlAttribute}},attr{{/isXmlAttribute}}"{{/withXml}}{{#vendorExtensions.x-go-custom-tag}} {{{.}}}{{/vendorExtensions.x-go-custom-tag}}`
+    {{name}} {{#isNullable}}*{{/isNullable}}{{^required}}{{^isNullable}}{{^isArray}}{{^isFreeFormObject}}*{{/isFreeFormObject}}{{/isArray}}{{/isNullable}}{{/required}}{{{dataType}}} `yaml:"{{#isWriteOnly}}-{{/isWriteOnly}}{{^isWriteOnly}}{{baseName}}{{^required}}{{^isNullable}},omitempty{{/isNullable}}{{/required}}{{/isWriteOnly}}" json:"{{#isWriteOnly}}-{{/isWriteOnly}}{{^isWriteOnly}}{{baseName}}{{^required}}{{^isNullable}},omitempty{{/isNullable}}{{/required}}{{/isWriteOnly}}"{{#withXml}} xml:"{{baseName}}{{#isXmlAttribute}},attr{{/isXmlAttribute}}"{{/withXml}}{{#vendorExtensions.x-go-custom-tag}} {{{.}}}{{/vendorExtensions.x-go-custom-tag}}`
 {{/vars}}
 {{#isAdditionalPropertiesTrue}}
     AdditionalProperties map[string]interface{}
