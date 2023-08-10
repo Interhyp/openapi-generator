@@ -158,6 +158,9 @@ public class CodegenConstants {
 
     public static final String PROJECT_NAME = "projectName";
     public static final String PACKAGE_NAME = "packageName";
+
+    // GitHub OpenApi spec declares some IDs as just integer, but gives you numbers that are too large
+    public static final String FORCE_LARGE_NUMBERS = "forceLargeNumbers";
     public static final String PACKAGE_NAME_DESC = "package for generated classes (where supported)";
 
     public static final String PACKAGE_VERSION = "packageVersion";

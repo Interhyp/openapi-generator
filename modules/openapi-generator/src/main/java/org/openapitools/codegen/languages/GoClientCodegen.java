@@ -115,6 +115,7 @@ public class GoClientCodegen extends AbstractGoCodegen {
         cliOptions.add(CliOption.newBoolean(CodegenConstants.IS_GO_SUBMODULE, CodegenConstants.IS_GO_SUBMODULE_DESC));
         cliOptions.add(CliOption.newBoolean(WITH_XML, "whether to include support for application/xml content type and include XML annotations in the model (works with libraries that provide support for JSON and XML)"));
         cliOptions.add(CliOption.newBoolean(CodegenConstants.ENUM_CLASS_PREFIX, CodegenConstants.ENUM_CLASS_PREFIX_DESC));
+        cliOptions.add(CliOption.newBoolean(CodegenConstants.FORCE_LARGE_NUMBERS, "Switch to all large numbers (int64, float64)."));
         cliOptions.add(CliOption.newBoolean(STRUCT_PREFIX, "whether to prefix struct with the class name. e.g. DeletePetOpts => PetApiDeletePetOpts"));
         cliOptions.add(CliOption.newBoolean(WITH_AWSV4_SIGNATURE, "whether to include AWS v4 signature support"));
         cliOptions.add(CliOption.newBoolean(GENERATE_INTERFACES, "Generate interfaces for api classes"));
@@ -218,7 +219,11 @@ public class GoClientCodegen extends AbstractGoCodegen {
             setEnumClassPrefix(Boolean.parseBoolean(additionalProperties.get(CodegenConstants.ENUM_CLASS_PREFIX).toString()));
             additionalProperties.put(CodegenConstants.ENUM_CLASS_PREFIX, enumClassPrefix);
         }
-
+        if (additionalProperties.containsKey(CodegenConstants.FORCE_LARGE_NUMBERS)) {
+            boolean enabled = Boolean.parseBoolean(additionalProperties.get(CodegenConstants.FORCE_LARGE_NUMBERS).toString());
+            setForceLargeNumbers(enabled);
+            additionalProperties.put(CodegenConstants.FORCE_LARGE_NUMBERS, enabled);
+        }
         if (additionalProperties.containsKey(CodegenConstants.IS_GO_SUBMODULE)) {
             setIsGoSubmodule(Boolean.parseBoolean(additionalProperties.get(CodegenConstants.IS_GO_SUBMODULE).toString()));
             additionalProperties.put(CodegenConstants.IS_GO_SUBMODULE, isGoSubmodule);

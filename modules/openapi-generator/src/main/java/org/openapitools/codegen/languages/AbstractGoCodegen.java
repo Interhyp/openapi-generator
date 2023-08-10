@@ -193,6 +193,14 @@ public abstract class AbstractGoCodegen extends DefaultCodegen implements Codege
 
     @Override
     public String toVarName(String name) {
+        // if name starts with + or -, replace with written out "Plus" or "Minus" before sanitize removes all special chars
+        // (GitHub OpenApi spec has fields "+1" and "-1" in the same structure, which both end up as Var1)
+        if (name.matches("^\\+.*")) {
+            name = name.replaceFirst("^\\+", "Plus");
+        }
+        if (name.matches("^-.*")) {
+            name = name.replaceFirst("^-", "Minus");
+        }
 
         // replace - with _ e.g. created-at => created_at
         name = sanitizeName(name);
@@ -807,6 +815,14 @@ public abstract class AbstractGoCodegen extends DefaultCodegen implements Codege
 
     public void setEnumClassPrefix(boolean enumClassPrefix) {
         this.enumClassPrefix = enumClassPrefix;
+    }
+
+    public void setForceLargeNumbers(boolean forceLargeNumbers) {
+        if (forceLargeNumbers) {
+            typeMapping.put("integer", "int64");
+            typeMapping.put("number", "float64");
+            typeMapping.put("float", "float64");
+        }
     }
 
     public void setStructPrefix(boolean structPrefix) {
