@@ -385,11 +385,10 @@ func (a *APIClient) {{nickname}}Execute(r *{{#structPrefix}}{{&classname}}{{/str
     {{#isFile}}
     request, multipartErr := createMultipartRequestForFile(r.ctx, r.{{paramName}}["fileName"], r.{{paramName}}["fileContent"])
     if multipartErr != nil {
-        return {{#returnType}}{{{.}}}{} {{/returnType}}, multipartErr
+        return aurestclientapi.ParsedResponse{}, multipartErr
     }
     {{/isFile}}
 {{/formParams}}
-
     return a.make{{nickname}}Call(r.ctx, requestURL, {{#bodyParams}}r.{{paramName}}{{/bodyParams}}{{^bodyParams}}{{#formParams}}{{#isFile}}request{{/isFile}}{{/formParams}}{{^formParams}}nil{{/formParams}}{{/bodyParams}})
 }
 
@@ -401,7 +400,6 @@ func (a *APIClient) {{{nickname}}}(ctx context.Context{{#pathParams}}, {{paramNa
 <%={{ }}=%>
 {{/pathParams}}
     requestURL, _ := urlUtil.Parse(fullUrlValue)
-
 {{#queryParams}}
 {{#isArray}}
     for _, ___element := range {{baseName}} {
@@ -416,11 +414,10 @@ func (a *APIClient) {{{nickname}}}(ctx context.Context{{#pathParams}}, {{paramNa
     {{#isFile}}
     request, multipartErr := createMultipartRequestForFile(ctx, {{paramName}}["fileName"], {{paramName}}["fileContent"])
     if multipartErr != nil {
-        return {{#returnType}}{{{.}}}{} {{/returnType}}, multipartErr
+        return aurestclientapi.ParsedResponse{}, multipartErr
     }
     {{/isFile}}
 {{/formParams}}
-
     return a.make{{{nickname}}}Call(ctx, requestURL, {{#bodyParams}}{{paramName}}{{/bodyParams}}{{^bodyParams}}{{#formParams}}{{#isFile}}request{{/isFile}}{{/formParams}}{{^formParams}}nil{{/formParams}}{{/bodyParams}})
 }
 
@@ -453,6 +450,9 @@ func (a *APIClient) make{{{nickname}}}Call(ctx context.Context, requestURL *urlU
         {{/is5xx}}
     {{/range}}
     {{^range}}
+        {{#wildcard}}
+    case status >= 0:
+        {{/wildcard}}
         {{^wildcard}}
     case status == {{{code}}}:
         {{/wildcard}}
