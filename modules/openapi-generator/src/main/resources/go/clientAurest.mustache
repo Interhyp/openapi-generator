@@ -250,11 +250,13 @@ func safeUnmarshal[T any](response *aurestclientapi.ParsedResponse) error {
 	var result T
 	responseData, ok := response.Body.(**[]byte)
 	if ok {
-		err := json.Unmarshal(**responseData, &result)
-		if err != nil {
-			return NewErrorWrap(err, response.Status)
-		}
-		response.Body = result
+        if len(**responseData) > 0 {
+            err := json.Unmarshal(**responseData, &result)
+            if err != nil {
+                return NewErrorWrap(err, response.Status)
+            }
+        }
+        response.Body = result
 	}else{
 		return NewError(fmt.Sprintf("Something wrong"), response.Status)
 	}
