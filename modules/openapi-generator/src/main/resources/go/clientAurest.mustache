@@ -40,7 +40,7 @@ type Client interface {
 {{#operations}}
 {{#operation}}
     {{{nickname}}}Request(ctx context.Context{{#pathParams}}, {{paramName}} {{{dataType}}}{{/pathParams}}) {{#structPrefix}}{{&classname}}{{/structPrefix}}{{^structPrefix}}Api{{/structPrefix}}{{operationId}}Request
-    {{{nickname}}}(ctx context.Context{{#pathParams}}, {{paramName}} {{{dataType}}}{{/pathParams}}{{#bodyParams}}, {{paramName}} {{{dataType}}}{{/bodyParams}}{{#formParams}}{{#isFile}}, {{paramName}} {{{dataType}}}{{/isFile}}{{/formParams}}{{#queryParams}}, {{paramName}} {{{dataType}}}{{/queryParams}}) (aurestclientapi.ParsedResponse, error)
+    {{{nickname}}}(ctx context.Context{{#pathParams}}, {{paramName}} {{{dataType}}}{{/pathParams}}{{#bodyParams}}, {{paramName}} {{{dataType}}}{{/bodyParams}}{{#formParams}}{{#isFile}}, {{paramName}} {{{dataType}}}{{/isFile}}{{/formParams}}{{#queryParams}}, {{paramName}} {{{dataType}}}{{/queryParams}}) ({{#returnType}}{{{.}}}, {{/returnType}}aurestclientapi.ParsedResponse, error)
 {{/operation}}
 {{/operations}}
 {{/apis}}
@@ -263,16 +263,6 @@ func safeUnmarshal[T any](response *aurestclientapi.ParsedResponse) error {
 	return nil
 }
 
-func (c *APIClient) call(ctx context.Context, method string, requestUrl string, requestBody interface{}) (aurestclientapi.ParsedResponse, error) {
-	emptyResponse := make([]byte, 0)
-	responseBodyPointer := &emptyResponse
-	response := aurestclientapi.ParsedResponse{
-		Body: &responseBodyPointer,
-	}
-	err := c.Client.Perform(ctx, method, requestUrl, requestBody, &response)
-	return response, err
-}
-
 // ---- error methods
 type Error interface {
     IsHttpError() bool
@@ -346,7 +336,7 @@ func (r *{{#structPrefix}}{{&classname}}{{/structPrefix}}{{^structPrefix}}Api{{/
 
 {{/isPathParam}}
 {{/allParams}}
-func (r *{{#structPrefix}}{{&classname}}{{/structPrefix}}{{^structPrefix}}Api{{/structPrefix}}{{operationId}}Request) Execute() (aurestclientapi.ParsedResponse, error) {
+func (r *{{#structPrefix}}{{&classname}}{{/structPrefix}}{{^structPrefix}}Api{{/structPrefix}}{{operationId}}Request) Execute() ({{#returnType}}{{{.}}}, {{/returnType}}aurestclientapi.ParsedResponse, error) {
     return r.ApiService.{{nickname}}Execute(r)
 }
 
@@ -363,7 +353,7 @@ func (a *APIClient) {{{nickname}}}Request(ctx context.Context{{#pathParams}}, {{
 {{#isDeprecated}}
 // Deprecated
 {{/isDeprecated}}
-func (a *APIClient) {{nickname}}Execute(r *{{#structPrefix}}{{&classname}}{{/structPrefix}}{{^structPrefix}}Api{{/structPrefix}}{{operationId}}Request) (aurestclientapi.ParsedResponse, error) {
+func (a *APIClient) {{nickname}}Execute(r *{{#structPrefix}}{{&classname}}{{/structPrefix}}{{^structPrefix}}Api{{/structPrefix}}{{operationId}}Request) ({{#returnType}}{{{.}}}, {{/returnType}}aurestclientapi.ParsedResponse, error) {
     fullUrlValue := a.BaseUrl + "{{{path}}}"
 {{#pathParams}}
     {{=<% %>=}}
@@ -387,14 +377,14 @@ func (a *APIClient) {{nickname}}Execute(r *{{#structPrefix}}{{&classname}}{{/str
     {{#isFile}}
     request, multipartErr := createMultipartRequestForFile(r.ctx, r.{{paramName}}["fileName"], r.{{paramName}}["fileContent"])
     if multipartErr != nil {
-        return aurestclientapi.ParsedResponse{}, multipartErr
+        return {{#returnType}}{{{.}}}{}, {{/returnType}}aurestclientapi.ParsedResponse{}, multipartErr
     }
     {{/isFile}}
 {{/formParams}}
     return a.make{{nickname}}Call(r.ctx, requestURL, {{#bodyParams}}r.{{paramName}}{{/bodyParams}}{{^bodyParams}}{{#formParams}}{{#isFile}}request{{/isFile}}{{/formParams}}{{^formParams}}nil{{/formParams}}{{/bodyParams}})
 }
 
-func (a *APIClient) {{{nickname}}}(ctx context.Context{{#pathParams}}, {{paramName}} {{{dataType}}}{{/pathParams}}{{#bodyParams}}, {{paramName}} {{{dataType}}}{{/bodyParams}}{{#formParams}}{{#isFile}}, {{paramName}} {{{dataType}}}{{/isFile}}{{/formParams}}{{#queryParams}}, {{paramName}} {{{dataType}}}{{/queryParams}}) (aurestclientapi.ParsedResponse, error) {
+func (a *APIClient) {{{nickname}}}(ctx context.Context{{#pathParams}}, {{paramName}} {{{dataType}}}{{/pathParams}}{{#bodyParams}}, {{paramName}} {{{dataType}}}{{/bodyParams}}{{#formParams}}{{#isFile}}, {{paramName}} {{{dataType}}}{{/isFile}}{{/formParams}}{{#queryParams}}, {{paramName}} {{{dataType}}}{{/queryParams}}) ({{#returnType}}{{{.}}}, {{/returnType}}aurestclientapi.ParsedResponse, error) {
     fullUrlValue := a.BaseUrl + "{{{path}}}"
 {{#pathParams}}
 {{=<% %>=}}
@@ -416,60 +406,82 @@ func (a *APIClient) {{{nickname}}}(ctx context.Context{{#pathParams}}, {{paramNa
     {{#isFile}}
     request, multipartErr := createMultipartRequestForFile(ctx, {{paramName}}["fileName"], {{paramName}}["fileContent"])
     if multipartErr != nil {
-        return aurestclientapi.ParsedResponse{}, multipartErr
+        return {{#returnType}}{{{.}}}{}, {{/returnType}}aurestclientapi.ParsedResponse{}, multipartErr
     }
     {{/isFile}}
 {{/formParams}}
     return a.make{{{nickname}}}Call(ctx, requestURL, {{#bodyParams}}{{paramName}}{{/bodyParams}}{{^bodyParams}}{{#formParams}}{{#isFile}}request{{/isFile}}{{/formParams}}{{^formParams}}nil{{/formParams}}{{/bodyParams}})
 }
 
-func (a *APIClient) make{{{nickname}}}Call(ctx context.Context, requestURL *urlUtil.URL, requestBody any) (aurestclientapi.ParsedResponse, error) {
+func (a *APIClient) make{{{nickname}}}Call(ctx context.Context, requestURL *urlUtil.URL, requestBody any) ({{#returnType}}{{{.}}}, {{/returnType}}aurestclientapi.ParsedResponse, error) {
 	method := http.Method{{httpMethod}}
 	requestUrl := requestURL.String()
 
-	response, err := a.call(ctx, method, requestUrl, requestBody)
+{{#returnProperty}}
+    {{#isString}}
+    var result *[]byte
+    {{/isString}}
+    {{^isString}}
+    var result {{returnType}}
+    {{/isString}}
+{{/returnProperty}}
+    emptyResponse := make([]byte, 0)
+    responseBodyPointer := &emptyResponse
+    response := aurestclientapi.ParsedResponse{
+        Body: &responseBodyPointer,
+    }
+    err := a.Client.Perform(ctx, method, requestUrl, requestBody, &response)
 	if err != nil {
-		return response, err
+		return {{#returnProperty}}{{#isString}}""{{/isString}}{{^isString}}result{{/isString}},{{/returnProperty}}response, err
 	}
-
-	switch status := response.Status; {
 {{#responses}}
+    {{^is1xx}}
+    {{^is2xx}}
     {{#range}}
-        {{#is1xx}}
-    case status >= 100 && status < 200:
-        {{/is1xx}}
-        {{#is2xx}}
-    case status >= 200 && status < 300:
-        {{/is2xx}}
         {{#is3xx}}
-    case status >= 300 && status < 400:
+    if response.Status >= 300 && response.Status < 400 {
         {{/is3xx}}
         {{#is4xx}}
-    case status >= 400 && status < 500:
+    if response.Status >= 400 && response.Status < 500 {
         {{/is4xx}}
         {{#is5xx}}
-    case status >= 500:
+    if response.Status >= 500 {
         {{/is5xx}}
     {{/range}}
     {{^range}}
-        {{#wildcard}}
-    case status >= 0:
-        {{/wildcard}}
         {{^wildcard}}
-    case status == {{{code}}}:
+    if response.Status == {{{code}}} {
         {{/wildcard}}
     {{/range}}
+    {{^wildcard}}
     {{#dataType}}
 		err := safeUnmarshal[{{{.}}}](&response)
-        return response, err
+        if err == nil {
+            err = NewError(fmt.Sprintf("Got status %d", response.Status), response.Status)
+        }
+        return {{#returnProperty}}{{#isString}}""{{/isString}}{{^isString}}result{{/isString}}, {{/returnProperty}}response, err
     {{/dataType}}
     {{^dataType}}
-		return response, nil
+		return {{#returnProperty}}{{#isString}}""{{/isString}}{{^isString}}result{{/isString}}, {{/returnProperty}}response, nil
     {{/dataType}}
+    }
+    {{/wildcard}}
+    {{/is2xx}}
+    {{/is1xx}}
 {{/responses}}
-	default:
-		return response, NewError(fmt.Sprintf("received unexpected status %d from server %s %s", response.Status, method, requestUrl), response.Status)
-	}
+
+{{#returnProperty}}
+    {{#isString}}
+    result = *response.Body.(**[]byte)
+    {{/isString}}
+    {{^isString}}
+    err = safeUnmarshal[{{returnType}}](&response)
+    if err == nil {
+        result = response.Body.({{returnType}})
+    }
+    {{/isString}}
+{{/returnProperty}}
+    return {{#returnProperty}}{{#isString}}string(*result){{/isString}}{{^isString}}result{{/isString}}, {{/returnProperty}}response, err
 }
 {{/operation}}
 {{/operations}}
