@@ -455,7 +455,7 @@ func (a *APIClient) make{{{nickname}}}Call(ctx context.Context, requestURL *urlU
     {{/range}}
     {{^wildcard}}
     {{#dataType}}
-		err := safeUnmarshal[{{{.}}}](&response)
+		err = safeUnmarshal[{{{.}}}](&response)
         if err == nil {
             err = NewError(fmt.Sprintf("Got status %d", response.Status), response.Status)
         }
@@ -470,17 +470,21 @@ func (a *APIClient) make{{{nickname}}}Call(ctx context.Context, requestURL *urlU
     {{/is1xx}}
 {{/responses}}
 
+    if response.Status < 400 {
 {{#returnProperty}}
     {{#isString}}
-    result = *response.Body.(**[]byte)
+        result = *response.Body.(**[]byte)
     {{/isString}}
     {{^isString}}
-    err = safeUnmarshal[{{returnType}}](&response)
-    if err == nil {
-        result = response.Body.({{returnType}})
-    }
+        err = safeUnmarshal[{{returnType}}](&response)
+        if err == nil {
+            result = response.Body.({{returnType}})
+        }
     {{/isString}}
 {{/returnProperty}}
+    } else {
+        err = NewError(fmt.Sprintf("Got unknown status %d", response.Status), response.Status)
+    }
     return {{#returnProperty}}{{#isString}}string(*result){{/isString}}{{^isString}}result{{/isString}}, {{/returnProperty}}response, err
 }
 {{/operation}}
