@@ -15,6 +15,7 @@ import (
     "time"
 
     aulogging "github.com/StephanHCB/go-autumn-logging"
+    auloggingapi "github.com/StephanHCB/go-autumn-logging/api"
     auapmclient "github.com/StephanHCB/go-autumn-restclient-apm/implementation/client"
     aurestbreakerprometheus "github.com/StephanHCB/go-autumn-restclient-circuitbreaker-prometheus"
     aurestbreaker "github.com/StephanHCB/go-autumn-restclient-circuitbreaker/implementation/breaker"
@@ -89,6 +90,15 @@ func DefaultApiClientConfig(baseUrl string) *ClientConfig {
 	}
 	config.RequestManipulator = requestHeaderManipulator(config)
 	return config
+}
+
+func DefaultApiClientConfigNewWithOptions(baseUrl string) *ClientConfig {
+    config := DefaultApiClientConfig(baseUrl)
+
+    config.LoggingConfigurer = CreateSetupLoggingNewWithOptions(aurestlogging.Debug, aurestlogging.Info, aurestlogging.Info)
+    config.RetryConfigurer = CreateRetryClientNewWithOptions(retryCondition(), betweenFailureAndRetry(), true)
+
+    return config
 }
 
 type APIClient struct {
@@ -189,6 +199,37 @@ func setupCircuitBreakerClient(client aurestclientapi.Client) aurestclientapi.Cl
     )
     aurestbreakerprometheus.InstrumentCircuitBreakerClient(circuitBreakerWrapper)
     return circuitBreakerWrapper
+}
+
+func CreateRetryClientNewWithOptions(retryConditionCallback aurestclientapi.RetryConditionCallback,
+    beforeRetryCallback aurestclientapi.BeforeRetryCallback,
+    silenceGivingUp bool) func(client aurestclientapi.Client) aurestclientapi.Client {
+    return func(client aurestclientapi.Client) aurestclientapi.Client {
+        retryWrapper := aurestretry.NewWithOptions(
+            client,
+            retryConditionCallback,
+            aurestretry.RetryOptions{
+                RepeatCount:      3,
+                BeforeRetryOrNil: beforeRetryCallback,
+                SilenceGivingUp:  silenceGivingUp,
+            },
+        )
+        aurestclientprometheus.InstrumentRetryClient(retryWrapper)
+        return retryWrapper
+    }
+}
+
+func CreateSetupLoggingNewWithOptions(beforeRequestLogger func(ctx context.Context) auloggingapi.LeveledLoggingImplementation,
+    successLogger func(ctx context.Context) auloggingapi.LeveledLoggingImplementation,
+    failureLogger func(ctx context.Context) auloggingapi.LeveledLoggingImplementation) func(client aurestclientapi.Client) aurestclientapi.Client {
+
+    return func(client aurestclientapi.Client) aurestclientapi.Client {
+        return aurestlogging.NewWithOptions(client, aurestlogging.RequestLoggingOptions{
+            BeforeRequest: beforeRequestLogger,
+            Success:       successLogger,
+            Failure:       failureLogger,
+        })
+    }
 }
 
 func setupRetryClient(client aurestclientapi.Client) aurestclientapi.Client {
