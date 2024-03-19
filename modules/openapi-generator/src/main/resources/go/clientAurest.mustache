@@ -305,7 +305,7 @@ func safeUnmarshal[T any](response *aurestclientapi.ParsedResponse) error {
 }
 
 // ---- error methods
-type Error interface {
+type IError interface {
     IsHttpError() bool
 }
 
@@ -341,7 +341,7 @@ func (e *HttpError) IsHttpError() bool {
 }
 
 func IsHttpError(err error) bool {
-    _, ok := err.(Error)
+    _, ok := err.(IError)
     return ok
 }
 
