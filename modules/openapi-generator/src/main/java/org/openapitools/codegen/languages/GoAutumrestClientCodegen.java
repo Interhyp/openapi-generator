@@ -1,17 +1,8 @@
 package org.openapitools.codegen.languages;
 
-import com.google.common.collect.Iterables;
-import org.openapitools.codegen.*;
-import io.swagger.models.properties.ArrayProperty;
-import io.swagger.models.properties.MapProperty;
-import io.swagger.models.properties.Property;
-import io.swagger.models.parameters.Parameter;
-
-import java.io.File;
-import java.util.*;
-
 import org.apache.commons.lang3.StringUtils;
-
+import org.openapitools.codegen.*;
+import org.openapitools.codegen.config.GlobalSettings;
 import org.openapitools.codegen.model.ModelMap;
 import org.openapitools.codegen.model.ModelsMap;
 import org.openapitools.codegen.model.OperationMap;
@@ -19,11 +10,18 @@ import org.openapitools.codegen.model.OperationsMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static org.openapitools.codegen.utils.StringUtils.camelize;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.*;
 
 public class GoAutumrestClientCodegen extends GoClientCodegen implements CodegenConfig {
     private final Logger LOGGER = LoggerFactory.getLogger(GoAutumrestClientCodegen.class);
     private final String apiFileFolder;
+
+    private final Set<String> allReferencedModels = new HashSet<>();
+    private List<ModelMap> allModels = new ArrayList<>();
 
     public CodegenType getTag() {
         return CodegenType.CLIENT;
@@ -63,8 +61,6 @@ public class GoAutumrestClientCodegen extends GoClientCodegen implements Codegen
     public void processOpts() {
         super.processOpts();
         supportingFiles.clear();
-
-//        supportingFiles.add(new SupportingFile("README.mustache", "", "README.md"));
 
         supportingFiles.add(new SupportingFile("base_client.mustache", "", "base_client.go"));
         supportingFiles.add(new SupportingFile("client_error.mustache", "", "client_error.go"));
@@ -114,20 +110,75 @@ public class GoAutumrestClientCodegen extends GoClientCodegen implements Codegen
         OperationMap objectMap = objs.getOperations();
         List<CodegenOperation> operations = objectMap.getOperation();
 
-        //TODO temporally remove this imports again
-        boolean addedReflectImport = false;
         for (CodegenOperation operation : operations) {
-
             for (CodegenParameter param : operation.allParams) {
-
                 // import "reflect" package if the parameter is collectionFormat=multi
-                if (!addedReflectImport && param.isCollectionFormatMulti) {
+                if (param.isCollectionFormatMulti) {
+                    //TODO temporally remove this imports again
                     imports.remove(createMapping("import", "reflect"));
-                    addedReflectImport = true;
+                    break;
                 }
             }
         }
 
+        String apiNames = GlobalSettings.getProperty("apis");
+        if (apiNames != null && !apiNames.isEmpty()) {
+            final Map<String, Collection<String>> model2Imports = new HashMap<>();
+            for (ModelMap modelMap : allModels) {
+                CodegenModel model = modelMap.getModel();
+                model2Imports.put(model.getClassname(), model.getImports());
+            }
+
+            for (CodegenOperation operation : operations) {
+                for (String modelImport : operation.imports) {
+                    addModels(modelImport, model2Imports);
+                }
+            }
+            this.allModels = new ArrayList<>(allModels);
+        }
         return objs;
+    }
+
+    private void addModels(String model, Map<String, Collection<String>> model2Imports) {
+        allReferencedModels.add(model);
+
+        Collection<String> importedModels = model2Imports.get(model);
+        if (importedModels != null) {
+            for (String importedModel : importedModels) {
+                if (!allReferencedModels.contains(importedModel)) {
+                    addModels(importedModel, model2Imports);
+                }
+            }
+        }
+    }
+
+    @Override
+    public void postProcess() {
+        super.postProcess();
+
+        String apiNames = GlobalSettings.getProperty("apis");
+        if (apiNames != null && !apiNames.isEmpty()) {
+            final Set<String> nonReferencedModelFilenames = new HashSet<>();
+            for (ModelMap modelMap : allModels) {
+                String className = modelMap.getModel().getClassVarName();
+                if (!allReferencedModels.contains(className)) {
+                    for (String templateName : modelTemplateFiles().keySet()) {
+                        String modelName = modelMap.getModel().getName();
+                        String filename = modelFilename(templateName, modelName);
+                        nonReferencedModelFilenames.add(filename);
+                    }
+                }
+            }
+
+            for (String filename : nonReferencedModelFilenames) {
+                try {
+                    Path path = Path.of(filename);
+                    LOGGER.info("drop unreferenced model-file {} again", path);
+                    Files.deleteIfExists(path);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        }
     }
 }
