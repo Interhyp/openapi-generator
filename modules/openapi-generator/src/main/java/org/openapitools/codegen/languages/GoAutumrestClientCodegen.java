@@ -1,6 +1,6 @@
 package org.openapitools.codegen.languages;
 
-import org.apache.commons.lang3.StringUtils;
+import io.swagger.v3.oas.models.media.Schema;
 import org.openapitools.codegen.*;
 import org.openapitools.codegen.config.GlobalSettings;
 import org.openapitools.codegen.model.ModelMap;
@@ -10,7 +10,6 @@ import org.openapitools.codegen.model.OperationsMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -18,14 +17,11 @@ import java.util.*;
 
 public class GoAutumrestClientCodegen extends GoClientCodegen implements CodegenConfig {
     private final Logger LOGGER = LoggerFactory.getLogger(GoAutumrestClientCodegen.class);
-    private final String apiFileFolder;
+
+    private static final String GENERATED_FILENAME_PREFIX = "generated_";
 
     private final Set<String> allReferencedModels = new HashSet<>();
     private List<ModelMap> allModels = new ArrayList<>();
-
-    public CodegenType getTag() {
-        return CodegenType.CLIENT;
-    }
 
     public String getName() {
         return "go-autumrest";
@@ -45,16 +41,16 @@ public class GoAutumrestClientCodegen extends GoClientCodegen implements Codegen
         apiDocTemplateFiles.clear();
 
         modelFileFolder = "";
-        apiFileFolder = "";
     }
 
     @Override
-    public String apiFileFolder() {
-        String folder = outputFolder + File.separator;
-        if (StringUtils.isNotBlank(apiFileFolder)) {
-            folder += apiFileFolder + File.separator;
-        }
-        return folder;
+    public String toApiFilename(String name) {
+        return GENERATED_FILENAME_PREFIX + super.toApiFilename(name);
+    }
+
+    @Override
+    public String toModelFilename(String name) {
+        return GENERATED_FILENAME_PREFIX + super.toModelFilename(name);
     }
 
     @Override
@@ -62,8 +58,8 @@ public class GoAutumrestClientCodegen extends GoClientCodegen implements Codegen
         super.processOpts();
         supportingFiles.clear();
 
-        supportingFiles.add(new SupportingFile("base_client.mustache", "", "base_client.go"));
-        supportingFiles.add(new SupportingFile("client_error.mustache", "", "client_error.go"));
+        supportingFiles.add(new SupportingFile("base_client.mustache", "", GENERATED_FILENAME_PREFIX + "base_client.go"));
+        supportingFiles.add(new SupportingFile("client_error.mustache", "", GENERATED_FILENAME_PREFIX + "client_error.go"));
     }
 
     @Override
@@ -79,11 +75,6 @@ public class GoAutumrestClientCodegen extends GoClientCodegen implements Codegen
             }
 //TODO temporally remove this imports again
             // additional import for different cases
-            // oneOf
-            if (model.oneOf != null && !model.oneOf.isEmpty()) {
-                imports.remove(createMapping("import", "fmt"));
-            }
-
             // anyOf
             if (model.anyOf != null && !model.anyOf.isEmpty()) {
                 imports.remove(createMapping("import", "fmt"));
@@ -94,6 +85,8 @@ public class GoAutumrestClientCodegen extends GoClientCodegen implements Codegen
                 imports.remove(createMapping("import", "reflect"));
 //                imports.add(createMapping("import", "strings"));
             }
+
+            m.put("hasImports", !imports.isEmpty());
         }
         return objs;
     }

@@ -2,11 +2,13 @@
 package {{packageName}}
 
 {{#models}}
+{{#hasImports}}
 import (
 {{#imports}}
     "{{import}}"
 {{/imports}}
 )
+{{/hasImports}}
 
 {{#model}}
 {{#isEnum}}
