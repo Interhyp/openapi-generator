@@ -324,3 +324,10 @@ func withUrlQueryParam(requestUrl *urlUtil.URL, valueName string, value string) 
 func parameterValueToString(obj interface{}) string {
 	return fmt.Sprint(obj)
 }
+
+// A wrapper for strict JSON decoding
+func newStrictDecoder(data []byte) *json.Decoder {
+    dec := json.NewDecoder(bytes.NewBuffer(data))
+    dec.DisallowUnknownFields()
+    return dec
+}
