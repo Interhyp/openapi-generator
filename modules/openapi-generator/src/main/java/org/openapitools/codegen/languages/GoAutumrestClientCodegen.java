@@ -1,6 +1,5 @@
 package org.openapitools.codegen.languages;
 
-import io.swagger.v3.oas.models.media.Schema;
 import org.openapitools.codegen.*;
 import org.openapitools.codegen.config.GlobalSettings;
 import org.openapitools.codegen.model.ModelMap;
@@ -73,15 +72,10 @@ public class GoAutumrestClientCodegen extends GoClientCodegen implements Codegen
             if (model.isEnum) {
                 continue;
             }
-//TODO temporally remove this imports again
-            // additional import for different cases
-            // anyOf
-            if (model.anyOf != null && !model.anyOf.isEmpty()) {
-                imports.remove(createMapping("import", "fmt"));
-            }
 
             // additionalProperties: true and parent
             if (model.isAdditionalPropertiesTrue && model.parent != null && Boolean.FALSE.equals(model.isMap)) {
+                //TODO temporally remove this imports again
                 imports.remove(createMapping("import", "reflect"));
 //                imports.add(createMapping("import", "strings"));
             }
@@ -153,11 +147,11 @@ public class GoAutumrestClientCodegen extends GoClientCodegen implements Codegen
         if (apiNames != null && !apiNames.isEmpty()) {
             final Set<String> nonReferencedModelFilenames = new HashSet<>();
             for (ModelMap modelMap : allModels) {
-                String className = modelMap.getModel().getClassVarName();
+                String className = modelMap.getModel().getClassname();
                 if (!allReferencedModels.contains(className)) {
                     for (String templateName : modelTemplateFiles().keySet()) {
                         String modelName = modelMap.getModel().getName();
-                        String filename = modelFilename(templateName, modelName);
+                        String filename = modelFilename(templateName, modelName.replaceAll("_+$", ""));
                         nonReferencedModelFilenames.add(filename);
                     }
                 }
@@ -166,8 +160,11 @@ public class GoAutumrestClientCodegen extends GoClientCodegen implements Codegen
             for (String filename : nonReferencedModelFilenames) {
                 try {
                     Path path = Path.of(filename);
-                    LOGGER.info("drop unreferenced model-file {} again", path);
-                    Files.deleteIfExists(path);
+                    if (Files.deleteIfExists(path)) {
+                        LOGGER.info("drop unreferenced model-file {} again", path);
+                    } else {
+                        LOGGER.info("drop unreferenced model-file {} again, but it doesn't exists", path);
+                    }
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
