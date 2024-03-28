@@ -305,7 +305,6 @@ public class CodegenConstants {
 
     public static final String GENERATE_APIS = "generateApis";
     public static final String GENERATE_API_DOCS = "generateApiDocs";
-    public static final String GENERATE_CLIENT = "generateClient";
     public static final String GENERATE_WEBHOOKS = "generateWebhooks";
 
     public static final String GENERATE_API_TESTS = "generateApiTests";
