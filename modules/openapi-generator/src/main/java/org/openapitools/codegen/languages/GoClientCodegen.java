@@ -309,12 +309,6 @@ public class GoClientCodegen extends AbstractGoCodegen {
         }
         supportingFiles.add(new SupportingFile(".travis.yml", "", ".travis.yml"));
         supportingFiles.add(new SupportingFile("utils.mustache", "", "utils.go"));
-
-        // Interhyp Custom Templates
-        supportingFiles.add(new SupportingFile("all_model_in_one_file.mustache", "", "generated_models.go"));
-        if (additionalProperties.containsKey(CodegenConstants.GENERATE_CLIENT)) {
-            supportingFiles.add(new SupportingFile("clientAurest.mustache", "", "generated_client.go"));
-        }
     }
 
     public void setUseOneOfDiscriminatorLookup(boolean useOneOfDiscriminatorLookup) {
