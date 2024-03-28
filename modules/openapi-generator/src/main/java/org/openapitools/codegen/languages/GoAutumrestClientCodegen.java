@@ -75,9 +75,19 @@ public class GoAutumrestClientCodegen extends GoClientCodegen implements Codegen
 
             // additionalProperties: true and parent
             if (model.isAdditionalPropertiesTrue && model.parent != null && Boolean.FALSE.equals(model.isMap)) {
-                //TODO temporally remove this imports again
+                //remove this imports again
                 imports.remove(createMapping("import", "reflect"));
-//                imports.add(createMapping("import", "strings"));
+            }
+
+            //remove this imports again
+            imports.remove(createMapping("import", "fmt"));
+            if (model.hasRequired) {
+                if (!model.isAdditionalPropertiesTrue &&
+                        (model.oneOf == null || model.oneOf.isEmpty()) &&
+                        (model.anyOf == null || model.anyOf.isEmpty())) {
+                    //remove this imports again
+                    imports.remove(createMapping("import", "bytes"));
+                }
             }
 
             m.put("hasImports", !imports.isEmpty());

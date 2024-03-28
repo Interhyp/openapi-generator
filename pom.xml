@@ -432,6 +432,15 @@
     </build>
     <profiles>
         <profile>
+            <id>interhyp</id>
+            <properties>
+                <skipTests>true</skipTests>
+                <checkstyle.skip>true</checkstyle.skip>
+                <jacoco.skip>true</jacoco.skip>
+                <maven.javadoc.skip>true</maven.javadoc.skip>
+            </properties>
+        </profile>
+        <profile>
             <id>release</id>
             <build>
                 <plugins>
