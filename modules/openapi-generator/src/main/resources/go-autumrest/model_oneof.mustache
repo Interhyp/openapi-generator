@@ -2,17 +2,17 @@ import ("encoding/json")
 
 // {{classname}} - {{{description}}}{{^description}}struct for {{{classname}}}{{/description}}
 type {{classname}} struct {
-{{#oneOf}}
-    {{#lambda.type-to-name}}{{{.}}}{{/lambda.type-to-name}} *{{{.}}}
-{{/oneOf}}
+	{{#oneOf}}
+	{{#lambda.type-to-name}}{{{.}}}{{/lambda.type-to-name}} *{{{.}}}
+	{{/oneOf}}
 }
 
 {{#oneOf}}
 // {{{.}}}As{{classname}} is a convenience function that returns {{{.}}} wrapped in {{classname}}
 func {{#lambda.type-to-name}}{{{.}}}{{/lambda.type-to-name}}As{{classname}}(v *{{{.}}}) {{classname}} {
-    return {{classname}}{
-        {{#lambda.type-to-name}}{{{.}}}{{/lambda.type-to-name}}: v,
-    }
+	return {{classname}}{
+		{{#lambda.type-to-name}}{{{.}}}{{/lambda.type-to-name}}: v,
+	}
 }
 
 {{/oneOf}}
