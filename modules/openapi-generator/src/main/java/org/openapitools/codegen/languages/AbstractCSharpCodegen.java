@@ -852,8 +852,8 @@ public abstract class AbstractCSharpCodegen extends DefaultCodegen {
                     if (operation.responses != null) {
                         for (CodegenResponse response : operation.responses) {
 
-                            if (response.returnProperty != null) {
-                                Boolean isValueType = isValueType(response.returnProperty);
+                            if (response.returnPropertyResponse != null) {
+                                Boolean isValueType = isValueType(response.returnPropertyResponse);
                                 response.vendorExtensions.put("x-is-value-type", isValueType);
                                 response.vendorExtensions.put("x-is-reference-type", !isValueType);
                             }

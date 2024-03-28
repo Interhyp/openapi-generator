@@ -102,7 +102,8 @@ public class CodegenResponse implements IJsonSchemaValidationProperties {
     private LinkedHashMap<String, CodegenMediaType> content;
     private Map<String, CodegenProperty> requiredVarsMap;
     private String ref;
-    public CodegenProperty returnProperty;
+    //Interhyp: renamed to prevent clashes with operation.returnProperty
+    public CodegenProperty returnPropertyResponse;
     private boolean schemaIsFromAdditionalProperties;
 
     @Override

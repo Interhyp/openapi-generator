@@ -4897,7 +4897,7 @@ public class DefaultCodegen implements CodegenConfig {
 
         CodegenProperty cp = fromProperty("response", responseSchema, false);
         r.dataType = getTypeDeclaration(responseSchema);
-        r.returnProperty = cp;
+        r.returnPropertyResponse = cp;
 
         if (!ModelUtils.isArraySchema(responseSchema)) {
             if (cp.complexType != null) {
