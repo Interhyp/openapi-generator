@@ -1,8 +1,3 @@
-import (
-    "encoding/json"
-    "fmt"
-)
-//anyOf
 // {{classname}} {{{description}}}{{^description}}struct for {{{classname}}}{{/description}}
 type {{classname}} struct {
 	{{#anyOf}}
@@ -53,8 +48,7 @@ func (dst *{{classname}}) UnmarshalJSON(data []byte) error {
 	// try to unmarshal JSON data into {{{.}}}
 	err = json.Unmarshal(data, &dst.{{{.}}});
 	if err == nil {
-		json{{{.}}}, _ := json.Marshal(dst.{{{.}}})
-		if string(json{{{.}}}) == "{}" { // empty struct
+        if dst.isEmpty(*dst.{{{.}}}) { // empty struct
 			dst.{{{.}}} = nil
 		} else {
 			return nil // data stored in dst.{{{.}}}, return on the first match
@@ -76,4 +70,22 @@ func (src *{{classname}}) MarshalJSON() ([]byte, error) {
 
 {{/anyOf}}
 	return nil, nil // no data in anyOf schemas
+}
+
+func (dst *{{classname}}) isEmpty(s interface{}) bool {
+	switch s.(type) {
+	{{#anyOf}}
+	case {{{.}}}:
+		x := s.({{{.}}})
+		v := reflect.ValueOf(x)
+		for i := 0; i < v.NumField(); i++ {
+			if !v.Field(i).IsZero() {
+				return false
+			}
+		}
+		return true
+	{{/anyOf}}
+    default:
+        return false
+    }
 }
