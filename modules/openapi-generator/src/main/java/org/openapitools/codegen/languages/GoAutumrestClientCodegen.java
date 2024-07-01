@@ -79,6 +79,11 @@ public class GoAutumrestClientCodegen extends GoClientCodegen implements Codegen
                 imports.remove(createMapping("import", "reflect"));
             }
 
+            if (model.oneOf != null && !model.oneOf.isEmpty() && generateUnmarshalJSON) {
+                //remove this imports again
+                imports.remove(createMapping("import", "gopkg.in/validator.v2"));
+            }
+
             //remove this imports again
             imports.remove(createMapping("import", "fmt"));
             if (model.hasRequired) {
