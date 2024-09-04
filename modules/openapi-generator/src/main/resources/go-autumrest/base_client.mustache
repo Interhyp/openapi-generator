@@ -176,7 +176,7 @@ func authorizationHeaderSetter(ctx context.Context, r *http.Request) {
 func setupCircuitBreakerClient(client aurestclientapi.Client) aurestclientapi.Client {
 	circuitBreakerWrapper := aurestbreaker.New(
 		client,
-		"Metadata",
+		"{{#appName}}",
 		100,
 		5*time.Minute,
 		60*time.Second,
@@ -237,7 +237,7 @@ func retryCondition() aurestclientapi.RetryConditionCallback {
 
 func betweenFailureAndRetry() aurestclientapi.BeforeRetryCallback {
 	return func(ctx context.Context, originalResponse *aurestclientapi.ParsedResponse, originalError error) error {
-		aulogging.Logger.Ctx(ctx).Warn().Print("got 503 from Metadata-endpoint - retrying request")
+		aulogging.Logger.Ctx(ctx).Warn().Print("got 503 from {{#appName}}-endpoint - retrying request")
 		return nil
 	}
 }
