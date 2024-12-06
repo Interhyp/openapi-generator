@@ -6,7 +6,7 @@
     <artifactId>openapi-generator-project</artifactId>
     <groupId>org.openapitools</groupId>
     <!-- RELEASE_VERSION -->
-    <version>7.11.0_INTERHYP-SNAPSHOT</version>
+    <version>7.11.1_INTERHYP-SNAPSHOT</version>
     <!-- /RELEASE_VERSION -->
     <relativePath>../../pom.xml</relativePath>
   </parent>
