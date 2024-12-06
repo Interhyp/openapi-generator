@@ -1271,7 +1271,7 @@ public abstract class AbstractPythonCodegen extends DefaultCodegen implements Co
                 for (CodegenResponse response : operation.responses) {
                     // Not interested in the result, only in the update of the imports
                     getPydanticType(
-                            response.returnProperty,
+                            response.returnPropertyResponse,
                             modelImports,
                             exampleImports,
                             postponedModelImports,

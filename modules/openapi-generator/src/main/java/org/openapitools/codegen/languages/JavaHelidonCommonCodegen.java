@@ -326,8 +326,8 @@ public abstract class JavaHelidonCommonCodegen extends AbstractJavaCodegen
         List<CodegenProperty> allResponseProps = new ArrayList<>(result.headers);
         List<CodegenProperty> requiredResponseProps = new ArrayList<>();
         List<CodegenProperty> optionalResponseProps = new ArrayList<>();
-        if (result.returnProperty != null) {
-            allResponseProps.add(result.returnProperty);
+        if (result.returnPropertyResponse != null) {
+            allResponseProps.add(result.returnPropertyResponse);
         }
         result.vendorExtensions.put(X_ALL_RESPONSE_PROPS, allResponseProps);
         for (CodegenProperty responseProp : allResponseProps) {

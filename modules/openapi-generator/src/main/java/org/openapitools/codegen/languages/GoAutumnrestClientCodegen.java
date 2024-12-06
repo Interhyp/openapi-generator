@@ -14,8 +14,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 
-public class GoAutumrestClientCodegen extends GoClientCodegen implements CodegenConfig {
-    private final Logger LOGGER = LoggerFactory.getLogger(GoAutumrestClientCodegen.class);
+public class GoAutumnrestClientCodegen extends GoClientCodegen implements CodegenConfig {
+    private final Logger LOGGER = LoggerFactory.getLogger(GoAutumnrestClientCodegen.class);
 
     private static final String GENERATED_FILENAME_PREFIX = "generated_";
 
@@ -23,17 +23,17 @@ public class GoAutumrestClientCodegen extends GoClientCodegen implements Codegen
     private List<ModelMap> allModels = new ArrayList<>();
 
     public String getName() {
-        return "go-autumrest";
+        return "go-autumnrest";
     }
 
     public String getHelp() {
         return "Generates a go-autumrest client.";
     }
 
-    public GoAutumrestClientCodegen() {
+    public GoAutumnrestClientCodegen() {
         super();
 
-        embeddedTemplateDir = templateDir = "go-autumrest";
+        embeddedTemplateDir = templateDir = "go-autumnrest";
 
         apiTestTemplateFiles.clear();
         modelDocTemplateFiles.clear();
